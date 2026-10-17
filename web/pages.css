@@ -1,0 +1,51 @@
+/* Telas extras (Criar com IA, Minha marca, Tour). Usa as cores de style.css. */
+html, body.page { overflow: auto; height: auto; min-height: 100%; }
+body.page .topbar { position: sticky; top: 0; z-index: 10; height: 44px; }
+.wrap { max-width: 1100px; margin: 0 auto; padding: 24px 16px 60px; }
+.wrap h1 { font-size: 24px; margin: 4px 0 4px; letter-spacing: -.01em; }
+.wrap .lead { color: var(--dim); margin: 0 0 22px; font-size: 14px; }
+.tabs { display: flex; gap: 6px; margin-bottom: 18px; flex-wrap: wrap; }
+.tabs button { padding: 8px 14px; border-radius: 20px; }
+.tabs button.active { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+.grid2 { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px; }
+.card h2 { font-size: 15px; margin: 0 0 12px; }
+.card + .card { margin-top: 14px; }
+.grid-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+.big-btn { width: 100%; padding: 12px; font-size: 15px; margin-top: 8px; }
+.steps { margin: 0; padding-left: 18px; color: var(--dim); }
+.steps li { margin: 6px 0; }
+.steps b { color: var(--text); }
+.recipe dl { margin: 0; display: grid; grid-template-columns: 110px 1fr; gap: 6px 10px; font-size: 13px; }
+.recipe dt { color: var(--dim); }
+.recipe dd { margin: 0; }
+.recipe ol { margin: 4px 0; padding-left: 18px; }
+.pill { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 20px; background: var(--panel-2); border: 1px solid var(--line); color: var(--dim); margin: 0 4px 4px 0; }
+.list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.list li { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: var(--panel-2); border-radius: 8px; }
+.list li .grow { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.list li small { color: var(--dim); }
+.list li button { padding: 3px 8px; font-size: 12px; }
+.colors { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.colors label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--dim); }
+.colors input[type=color] { width: 100%; height: 40px; border: 1px solid var(--line); border-radius: 8px; background: none; padding: 2px; cursor: pointer; }
+.img-slot { display: flex; align-items: center; gap: 12px; margin: 10px 0; }
+.img-slot .pv { width: 72px; height: 72px; border-radius: 12px; background: #0c0d11 center/contain no-repeat; border: 1px solid var(--line); flex-shrink: 0; }
+.img-slot .pv.round { border-radius: 50%; background-size: cover; }
+.mock { aspect-ratio: 9 / 16; max-width: 260px; margin: 0 auto; border-radius: 18px; overflow: hidden; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 20px; text-align: center; }
+.mock .av { width: 46%; aspect-ratio: 1; border-radius: 50%; background: #222 center/cover; border: 3px solid rgba(255,255,255,.2); }
+.mock .big { font-weight: 900; font-size: 22px; line-height: 1.1; }
+.mock .box { font-weight: 800; padding: 5px 10px; border-radius: 4px; color: #111; font-size: 13px; }
+.mock .lg { position: absolute; top: 12px; right: 12px; width: 22%; aspect-ratio: 2; background: center/contain no-repeat; }
+.mock .hd { position: absolute; bottom: 14px; font-size: 11px; opacity: .7; }
+.warn { background: #2a2312; border: 1px solid #5a4a1c; color: #ffe2a0; border-radius: 10px; padding: 10px 12px; font-size: 12.5px; margin: 10px 0; }
+.ok { color: var(--ok); }
+.progress { margin-top: 12px; }
+.progress .bar { width: 100%; }
+.consent { background: #1d1a24; border: 1px solid #3a3150; border-radius: 10px; padding: 10px 12px; font-size: 12.5px; }
+@media (max-width: 860px) {
+  .grid2, .grid-fields { grid-template-columns: minmax(0, 1fr); }
+  .colors { grid-template-columns: repeat(2, 1fr); }
+  body.page .topbar { height: auto; flex-wrap: wrap; }
+  body.page .menu { display: flex; flex-wrap: wrap; }
+}

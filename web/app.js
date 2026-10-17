@@ -7,7 +7,7 @@ const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 
 const S = {
-  cfg: null, presets: [], music: [], project: null, peaks: [],
+  cfg: null, presets: [], music: [], project: null, peaks: [], brand: null,
   playing: false, outTime: 0, clipIdx: 0, sel: null, pps: 60,
   pollTimer: null, pending: null, aiBusy: false, capLines: [], ovKey: "",
 };
@@ -75,13 +75,29 @@ function captionLines(words, perLine) {
 
 async function init() {
   bindUI();
-  [S.cfg, S.presets, S.music] = await Promise.all([api("/api/config"), api("/api/presets"), api("/api/music")]);
+  [S.cfg, S.presets, S.music, S.brand] = await Promise.all([api("/api/config"), api("/api/presets"), api("/api/music"), api("/api/brand")]);
+  applyBrand();
   renderConfig();
   renderPresets();
   renderMusicList();
   const projects = await loadProjects();
-  if (projects.length) openProject(projects[0].id);
+  const params = new URLSearchParams(location.search);
+  const wanted = params.get("p");
+  if (params.get("preset") && S.presets.some((x) => x.id === params.get("preset"))) {
+    $("#presetSel").value = params.get("preset");
+    toast("Estilo selecionado. Envie um vídeo ou clique em ✦ Editar com IA.");
+  }
+  if (wanted && projects.some((p) => p.id === wanted)) openProject(wanted);
+  else if (projects.length) openProject(projects[0].id);
   else renderAll();
+}
+
+function applyBrand() {
+  const c = S.brand.colors;
+  const root = document.documentElement.style;
+  root.setProperty("--brand-accent", c.accent);
+  root.setProperty("--brand-primary", c.primary);
+  if (S.brand.logo) $("#ovLogo").src = `/media/brand/logo.png?v=${Date.now()}`;
 }
 
 async function loadProjects() {
@@ -106,7 +122,7 @@ async function openProject(id) {
   S.clipIdx = 0;
   if (S.project.status === "pronto") S.peaks = await api(`/api/projects/${id}/peaks`);
   const preset = S.project.preset;
-  if (preset) $("#presetSel").value = preset;
+  if (preset && !new URLSearchParams(location.search).get("preset")) $("#presetSel").value = preset;
   renderAll();
   loadProjects();
   ensurePolling();
@@ -313,7 +329,9 @@ function addText(style) {
   if (!ready()) return;
   const t = clone(TL());
   const c = t.clips[clipAt(S.outTime, t.clips)];
-  const x = { id: uid("t"), text: "Seu texto", clip_id: c.id, offset: Math.max(0, S.outTime - c.start), length: 2.5, style };
+  const rich = RICH.includes(style);
+  const x = { id: uid("t"), text: rich ? RICH_SAMPLES[style] : "Seu texto", clip_id: c.id, offset: Math.max(0, S.outTime - c.start),
+    length: { isso_nisso: 6, produto: 4, rotina: 4, aviso: 8, pergunta: 3, final: 3 }[style] || 2.5, style };
   t.texts.push(x);
   S.sel = { type: "text", id: x.id };
   showPanel("inspetor");
@@ -404,6 +422,7 @@ function drawFrame() {
   $("#tc").textContent = tc(now);
   $("#playhead").style.left = `${now * S.pps}px`;
 
+  $("#ovLogo").hidden = !(t.logo && S.brand?.logo);
   const cap = $("#ovCaption");
   let capKey = "";
   if (t.captions.enabled) {
@@ -419,21 +438,77 @@ function drawFrame() {
   }
   if (!capKey && cap._key) cap.innerHTML = "";
   cap._key = capKey;
-  cap.className = `ov-caption ${t.captions.position || "bottom"}`;
+  cap.className = `ov-caption ${t.captions.position || "bottom"} ${t.captions.style}`;
 
   const active = t.texts.filter((x) => now >= x.start && now < x.end);
-  const key = active.map((x) => x.id + x.text + x.style).join("|");
+  const rendered = active.map((x) => (RICH.includes(x.style) ? richHTML(x, now - x.start) : [x.id + x.text + x.style, plainHTML(x)]));
+  const key = rendered.map((r) => r[0]).join("|");
   if (key !== S.ovKey) {
     S.ovKey = key;
-    $("#ovTexts").innerHTML = active.map((x) => {
-      const inner = ["destaque", "cta", "rodape"].includes(x.style) ? `<span>${esc(x.text)}</span>` : esc(x.text);
-      return `<div class="ovt ${x.style}">${inner}</div>`;
-    }).join("");
+    $("#ovTexts").innerHTML = rendered.map((r) => r[1]).join("");
   }
 
   const scroll = $("#tlScroll");
   const x = now * S.pps;
   if (S.playing && (x < scroll.scrollLeft || x > scroll.scrollLeft + scroll.clientWidth - 40)) scroll.scrollLeft = x - 60;
+}
+
+/* ---------- formato isso → nisso (mesmas regras de tempo do overlays.py) ---------- */
+const RICH = ["aviso", "pergunta", "isso_nisso", "produto", "rotina", "final"];
+const RICH_SAMPLES = {
+  aviso: "Simulação com IA · não é consulta médica",
+  pergunta: "Qual é a sua profissão?|Sou dentista. Edição com IA funciona pra mim?",
+  isso_nisso: "isso|nisso",
+  produto: "Nome do produto|manhã|noite",
+  rotina: "Sua rotina|Passo 1|Passo 2|Passo 3",
+  final: "|me chama no direct",
+};
+const RICH_NAMES = { aviso: "Aviso", pergunta: "Pergunta", isso_nisso: "Isso → Nisso", produto: "Use isso (produto)", rotina: "Checklist", final: "Tela final @" };
+const parts = (t) => String(t || "").split("|").map((x) => x.trim());
+
+function plainHTML(x) {
+  const inner = ["destaque", "cta", "rodape"].includes(x.style) ? `<span>${esc(x.text)}</span>` : esc(x.text);
+  return `<div class="ovt ${x.style}">${inner}</div>`;
+}
+
+function richHTML(x, p) {
+  const d = x.end - x.start;
+  const P = parts(x.text);
+  const asset = (f) => `/media/projects/${S.project.id}/assets/${encodeURIComponent(f)}`;
+  if (x.style === "aviso") return [x.id + "a", `<div class="rx rx-aviso">ⓘ ${esc(P[0])}</div>`];
+  if (x.style === "pergunta") {
+    const h = S.brand?.handle ? `<div class="rx rx-handle" style="right:14cqw;top:27cqh">${esc(S.brand.handle.toUpperCase())}</div>` : "";
+    return [x.id + "p", `<div class="rx rx-perg"><div class="h">${esc(P[0])}</div><div class="b">${esc(P[1] || "")}</div></div>${h}`];
+  }
+  if (x.style === "isso_nisso") {
+    const ta = Math.max(0.35, d * 0.2), tb = Math.max(ta + 0.5, d * 0.45);
+    const showA = x.img_a && p >= ta, showB = x.img_b && p >= tb, arrow = p >= tb + 0.35;
+    const frame = (cls, img, show, label, scan) => `<div class="rx glass rx-frame ${cls} ${show ? "lit" : ""}">
+      ${show ? `<img src="${asset(img)}" alt="">${scan ? '<i class="scan"></i>' : ""}` : esc(label)}</div>`;
+    return [`${x.id}n${+!!showA}${+!!showB}${+arrow}`,
+      frame("a", x.img_a, showA, P[0] || "isso", false) + frame("b", x.img_b, showB, P[1] || "nisso", true) + (arrow ? `<div class="rx rx-arrow"></div>` : "")];
+  }
+  if (x.style === "produto") {
+    const card = Math.min(0.8, d * 0.3);
+    if (p < card) return [x.id + "ph", `<div class="rx glass rx-prod ph">use isso</div>`];
+    const chips = P.slice(1).filter(Boolean).slice(0, 4);
+    const n = chips.filter((_, i) => p >= card + 0.35 + 0.3 * i).length;
+    return [`${x.id}c${n}`, `<div class="rx rx-prod card"><span>${esc(P[0])}</span></div>
+      <div class="rx rx-chips">${chips.slice(0, n).map((c) => `<span>• ${esc(c)}</span>`).join("")}</div>`];
+  }
+  if (x.style === "rotina") {
+    const items = P.slice(1).filter(Boolean).slice(0, 5);
+    const nIt = Math.max(1, items.length);
+    const shown = items.filter((_, i) => p >= 0.15 + 0.2 * i).length;
+    const checked = items.filter((_, i) => p >= d * 0.35 + (d * 0.45 * i) / Math.max(1, nIt - 1)).length;
+    return [`${x.id}r${shown}${checked}`, `<div class="rx rx-rot"><div class="t">${esc(P[0] || "Sua rotina")}</div>
+      ${items.slice(0, shown).map((it, i) => `<div class="i ${i < checked ? "ok" : ""}"><i>${i < checked ? "✓" : ""}</i>${esc(it)}</div>`).join("")}</div>`];
+  }
+  if (x.style === "final") {
+    const handle = P[0] || S.brand?.handle || "";
+    return [x.id + "f", `<div class="rx rx-final"><div class="ig"></div>${handle ? `<b>${esc(handle)}</b>` : ""}${P[1] ? `<span>${esc(P[1])}</span>` : ""}</div>`];
+  }
+  return [x.id, ""];
 }
 
 function fitFrame() {
@@ -535,6 +610,7 @@ function renderPresets() {
     </button>`).join("");
   const styles = [["gancho", "Gancho"], ["titulo", "Título"], ["destaque", "Destaque"], ["rodape", "Rodapé"], ["cta", "Chamada (CTA)"]];
   $("#textStyles").innerHTML = styles.map(([id, n]) => `<button data-addtext="${id}">${n}</button>`).join("");
+  $("#richStyles").innerHTML = RICH.map((id) => `<button data-addtext="${id}">${RICH_NAMES[id]}</button>`).join("");
 }
 
 function renderSidePanels() {
@@ -547,6 +623,8 @@ function renderSidePanels() {
   $("#capPos").value = t.captions.position || "bottom";
   $("#capWords").value = t.captions.words || 3;
   $("#capWordsOut").textContent = t.captions.words || 3;
+  $("#logoEnabled").checked = !!t.logo;
+  $("#logoEnabled").disabled = !S.brand?.logo;
   $("#musicEnabled").checked = !!t.music.enabled;
   $("#musicDuck").checked = t.music.duck !== false;
   $("#musicVol").value = t.music.volume ?? 0.12;
@@ -760,13 +838,32 @@ function renderInspector() {
     box.innerHTML = `
       <label class="field">Texto <textarea id="inText" rows="2">${esc(x.text)}</textarea></label>
       <label class="field">Estilo
-        <select id="inStyle">${["gancho", "titulo", "destaque", "rodape", "cta"].map((s) => `<option ${s === x.style ? "selected" : ""}>${s}</option>`).join("")}</select>
+        <select id="inStyle">${["gancho", "titulo", "destaque", "rodape", "cta", ...RICH].map((s) => `<option value="${s}" ${s === x.style ? "selected" : ""}>${RICH_NAMES[s] || s}</option>`).join("")}</select>
       </label>
+      ${RICH.includes(x.style) ? `<p class="hint">Separe as partes com <b>|</b>. Ex.: ${esc(RICH_SAMPLES[x.style])}</p>` : ""}
+      ${x.style === "isso_nisso" ? `<div class="row-btns">
+        <label class="drop"><input type="file" accept="image/*" hidden data-img="img_a"><b>Imagem do “isso”</b><span>${x.img_a ? "✓ escolhida" : "antes"}</span></label>
+        <label class="drop"><input type="file" accept="image/*" hidden data-img="img_b"><b>Imagem do “nisso”</b><span>${x.img_b ? "✓ escolhida" : "depois"}</span></label>
+      </div>` : ""}
       <label class="field">Duração <input type="range" id="inLen" min="0.5" max="10" step="0.1" value="${x.length}"><output>${x.length.toFixed(1)}s</output></label>
       <button id="inDel">🗑 Apagar texto</button>`;
     const upd = (f) => { const nt = clone(TL()); f(nt.texts.find((y) => y.id === x.id)); saveTimeline(nt, 500); };
     $("#inText").oninput = (e) => upd((y) => (y.text = e.target.value));
-    $("#inStyle").onchange = (e) => upd((y) => (y.style = e.target.value));
+    $("#inStyle").onchange = (e) => {
+      const st = e.target.value;
+      upd((y) => { y.style = st; if (RICH.includes(st) && !y.text.includes("|") && st !== "aviso") y.text = RICH_SAMPLES[st]; });
+    };
+    for (const inp of $$("input[data-img]", box)) inp.onchange = async (e) => {
+      const f = e.target.files[0];
+      if (!f) return;
+      const fd = new FormData();
+      fd.append("file", f);
+      try {
+        const { file } = await api(`/api/projects/${S.project.id}/asset`, { method: "POST", body: fd });
+        upd((y) => (y[inp.dataset.img] = file));
+        toast("Imagem adicionada ✓");
+      } catch (err) { toast(err.message); }
+    };
     $("#inLen").oninput = (e) => { e.target.nextElementSibling.textContent = `${(+e.target.value).toFixed(1)}s`; upd((y) => (y.length = +e.target.value)); };
     $("#inDel").onclick = deleteSelected;
   }
@@ -783,6 +880,8 @@ function openSettings() {
   const c = S.cfg;
   $("#cfgKey").value = "";
   $("#cfgKey").placeholder = c.has_key ? `chave salva (${c.key_hint}) — deixe vazio para manter` : "sk-ant-…";
+  $("#cfgEl").value = "";
+  $("#cfgEl").placeholder = c.has_elevenlabs ? `chave salva (${c.elevenlabs_hint}) — deixe vazio para manter` : "sk_…";
   $("#cfgModel").innerHTML = c.models.map((m) => `<option value="${m.id}" ${m.id === c.model ? "selected" : ""}>${esc(m.name)}</option>`).join("");
   $("#cfgEffort").value = c.effort;
   $("#cfgLang").value = c.language;
@@ -796,6 +895,8 @@ async function saveSettings() {
   const body = { model: $("#cfgModel").value, effort: $("#cfgEffort").value, language: $("#cfgLang").value };
   const key = $("#cfgKey").value.trim();
   if (key) body.api_key = key;
+  const el = $("#cfgEl").value.trim();
+  if (el) body.elevenlabs_key = el;
   S.cfg = await api("/api/config", { method: "POST", json: body });
   renderConfig();
   toast("Configurações salvas.");
@@ -896,7 +997,7 @@ function bindUI() {
   };
   $("#presetSel").onchange = renderSidePanels;
   $("#autoBtn").onclick = () => runAI("", true);
-  $("#textStyles").onclick = (e) => { const b = e.target.closest("[data-addtext]"); if (b) addText(b.dataset.addtext); };
+  $("#textStyles").onclick = $("#richStyles").onclick = (e) => { const b = e.target.closest("[data-addtext]"); if (b) addText(b.dataset.addtext); };
 
   $("#chatForm").onsubmit = (e) => {
     e.preventDefault();
@@ -935,6 +1036,44 @@ function bindUI() {
     try { S.music = await api("/api/music", { method: "POST", body: fd }); renderMusicList(); toast("Música enviada."); }
     catch (err) { toast(err.message); }
     e.target.value = "";
+  };
+
+  $("#logoEnabled").onchange = (e) => editTl((t) => (t.logo = e.target.checked));
+
+  // fundo
+  const bgRows = () => {
+    const m = $("#bgMode").value;
+    $("#bgColorRow").hidden = m !== "cor";
+    $("#bgImageRow").hidden = m !== "imagem";
+  };
+  $("#bgMode").onchange = bgRows;
+  bgRows();
+  $("#bgImage").onchange = async (e) => {
+    const f = e.target.files[0];
+    if (!f || !S.project) return;
+    const fd = new FormData();
+    fd.append("file", f);
+    try {
+      await api(`/api/projects/${S.project.id}/background-image`, { method: "POST", body: fd });
+      $("#bgImageName").textContent = f.name;
+    } catch (err) { toast(err.message); }
+  };
+  $("#bgApply").onclick = async () => {
+    if (!ready()) return toast("Abra um projeto pronto primeiro.");
+    try {
+      await api(`/api/projects/${S.project.id}/background`, { method: "POST", json: { mode: $("#bgMode").value, color: $("#bgColor").value } });
+      pause();
+      S.project.status = "analisando";
+      S.project.status_text = "Trocando o fundo…";
+      S.project.progress = 0;
+      renderBusy();
+      ensurePolling();
+    } catch (err) { toast(err.message); }
+  };
+  $("#bgReset").onclick = async () => {
+    if (!S.project) return;
+    try { setProject(await api(`/api/projects/${S.project.id}/background/reset`, { method: "POST" })); setVideoSource(); toast("Fundo original de volta."); }
+    catch (err) { toast(err.message); }
   };
 
   // timeline

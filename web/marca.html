@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Minha marca · Edita Fácil</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="pages.css">
+</head>
+<body class="page">
+<header class="topbar">
+  <div class="tb-left">
+    <div class="logo"><span class="logo-mark">E</span>Edita Fácil</div>
+    <nav class="menu">
+      <a href="/">Editor</a>
+      <a href="/studio.html">✦ Criar com IA</a>
+      <a href="/marca.html" class="active">Minha marca</a>
+      <a href="/tour.html">Tour 3D</a>
+    </nav>
+  </div>
+</header>
+
+<div class="wrap">
+  <h1>Minha marca</h1>
+  <p class="lead">Preencha uma vez. A IA usa isso como referência em todos os vídeos: cores nas legendas e textos, logo no canto, seu avatar nas cenas e o seu jeito de falar nos roteiros.</p>
+
+  <div class="grid2">
+    <div>
+      <div class="card">
+        <h2>Quem é você</h2>
+        <div class="grid-fields">
+          <label class="field">Nome da marca <input type="text" id="b_name" placeholder="ex.: Clínica Sorriso"></label>
+          <label class="field">@ do Instagram/TikTok <input type="text" id="b_handle" placeholder="@seuperfil"></label>
+          <label class="field">Nicho / profissão <input type="text" id="b_niche" placeholder="ex.: dentista estética em BH"></label>
+          <label class="field">Público <input type="text" id="b_audience" placeholder="ex.: mulheres 25–45 que querem clarear"></label>
+          <label class="field">Tom de voz <input type="text" id="b_tone"></label>
+          <label class="field">Chamada final (CTA) <input type="text" id="b_cta" placeholder="ex.: Agende sua avaliação"></label>
+        </div>
+        <label class="field">Quem aparece nos vídeos <input type="text" id="b_avatar_desc" placeholder="ex.: Dra. Ana, 34 anos, jaleco branco, fala animada"></label>
+      </div>
+
+      <div class="card">
+        <h2>Cores</h2>
+        <div class="colors">
+          <label>Principal <input type="color" id="c_primary"></label>
+          <label>Secundária <input type="color" id="c_secondary"></label>
+          <label>Destaque <input type="color" id="c_accent"></label>
+          <label>Texto <input type="color" id="c_text"></label>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Logo e avatar</h2>
+        <div class="img-slot">
+          <div class="pv" id="pvLogo"></div>
+          <div>
+            <label class="drop"><input type="file" accept="image/*" hidden id="f_logo"><b>Enviar logo</b><span>PNG com fundo transparente é o ideal</span></label>
+            <button id="rmLogo" class="link">Remover</button>
+          </div>
+        </div>
+        <label class="row"><input type="checkbox" id="b_watermark"> Colocar a logo no canto dos vídeos</label>
+        <div class="img-slot">
+          <div class="pv round" id="pvAvatar"></div>
+          <div>
+            <label class="drop"><input type="file" accept="image/*" hidden id="f_avatar"><b>Enviar avatar</b><span>Sua foto de rosto, bem iluminada</span></label>
+            <button id="rmAvatar" class="link">Remover</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Sua voz (ElevenLabs)</h2>
+        <div class="warn" id="elWarn" hidden>Coloque a chave da ElevenLabs em ⚙ Configurações (no Editor) para usar vozes.</div>
+        <ul class="list" id="voices"></ul>
+        <h2 style="margin-top:16px">Clonar uma voz</h2>
+        <p class="hint">Grave de 1 a 3 minutos falando natural, sem música e sem barulho. Pode mandar vários áudios ou vídeos curtos.</p>
+        <label class="field">Nome da voz <input type="text" id="v_name" placeholder="ex.: Minha voz"></label>
+        <label class="drop"><input type="file" accept="audio/*,video/*" multiple hidden id="v_files"><b>Escolher áudios</b><span id="v_count">MP3, WAV, M4A</span></label>
+        <label class="row consent"><input type="checkbox" id="v_consent"> Esta voz é minha, ou a pessoa dona da voz me autorizou a cloná-la. Não vou usar para enganar ninguém.</label>
+        <button class="primary big-btn" id="v_clone">Clonar voz</button>
+      </div>
+    </div>
+
+    <div style="position: sticky; top: 64px">
+      <div class="card">
+        <h2>Prévia</h2>
+        <div class="mock" id="mock">
+          <div class="lg" id="mkLogo"></div>
+          <div class="av" id="mkAv"></div>
+          <div class="big" id="mkBig">Seu <span id="mkAcc">sorriso</span> em 7 dias</div>
+          <div class="box" id="mkBox">AGENDE AGORA</div>
+          <div class="hd" id="mkHandle">@seuperfil</div>
+        </div>
+      </div>
+      <button class="primary big-btn" id="save">Salvar marca</button>
+      <p class="hint" id="saved"></p>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script src="common.js"></script>
+<script src="marca.js"></script>
+</body>
+</html>

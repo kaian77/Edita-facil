@@ -6,6 +6,7 @@ A timeline tem dois relógios:
 """
 import uuid
 
+from . import brand as brandkit
 from .ai import FORMATS, TEXT_STYLES
 
 MIN_CLIP = 0.3
@@ -60,7 +61,7 @@ def build(plan: dict, transcript: dict, info: dict, preset: dict, previous: dict
         texts.append({
             "id": _id("t"), "text": t["text"].strip(), "clip_id": clips[idx]["id"],
             "offset": max(0.0, float(t.get("offset", 0))),
-            "length": min(8.0, max(0.6, float(t.get("duration", 2)))),
+            "length": min(15.0, max(0.6, float(t.get("duration", 2)))),
             "style": t["style"] if t.get("style") in TEXT_STYLES else "destaque",
         })
 
@@ -78,6 +79,7 @@ def build(plan: dict, transcript: dict, info: dict, preset: dict, previous: dict
         "texts": texts,
         "captions": captions,
         "music": music,
+        "logo": (previous or {}).get("logo", brandkit.load()["watermark"] and bool(brandkit.path("logo"))),
         "scenes": plan.get("scenes", []),
         "summary": plan.get("summary", ""),
         "preset": preset["id"],

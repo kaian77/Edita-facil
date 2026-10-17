@@ -12,6 +12,8 @@ import json
 
 import anthropic
 
+from . import brand as brandkit
+
 MODELS = {
     # id: (nome, US$ por 1M tokens de entrada, US$ por 1M de saída)
     "claude-opus-5-5": ("Claude Opus 5.5 — melhor qualidade", 4.0, 20.0),
@@ -20,7 +22,7 @@ MODELS = {
 }
 DEFAULT_MODEL = "claude-opus-5-5"
 
-TEXT_STYLES = ["gancho", "titulo", "destaque", "rodape", "cta"]
+TEXT_STYLES = ["gancho", "titulo", "destaque", "rodape", "cta", "aviso", "pergunta", "isso_nisso", "produto", "rotina", "final"]
 FORMATS = ["9:16", "16:9", "1:1", "4:5", "original"]
 
 SYSTEM_PROMPT = """Você é um editor de vídeo profissional brasileiro, especialista em Reels, TikTok, Shorts e comerciais.
@@ -33,7 +35,14 @@ Como o plano funciona:
 - clips: a lista ORDENADA de pedaços do vídeo original que vão para o vídeo final. Cada clip tem start/end em segundos do vídeo ORIGINAL. Normalmente cada clip é um trecho (#id) inteiro, mas você pode cortar só uma parte de um trecho (ex.: tirar uma palavra repetida no começo) ou juntar trechos vizinhos. Tudo que não estiver em clips é cortado. A ordem dos clips é a ordem do vídeo final (pode reordenar se o modelo pedir).
 - zoom: 1.0 = normal. 1.05 a 1.25 = zoom de ênfase (corte seco, estilo Reels).
 - label: nome curto da cena a que o clip pertence (ex.: "Gancho", "Problema", "CTA"). Clips seguidos com o mesmo label formam uma cena.
-- texts: textos animados na tela. at_clip é o índice (começando em 0) do clip onde o texto aparece; offset é quantos segundos depois do começo daquele clip; duration é por quanto tempo fica. style: gancho (grande, topo), titulo (grande, centro), destaque (caixa colorida), rodape (faixa embaixo), cta (chamada final). Máximo 7 palavras por texto. As legendas do que é falado são geradas automaticamente: NÃO repita a fala inteira em texts.
+- texts: textos animados na tela. at_clip é o índice (começando em 0) do clip onde o texto aparece; offset é quantos segundos depois do começo daquele clip; duration é por quanto tempo fica. style: gancho (grande, topo), titulo (grande, centro), destaque (caixa colorida), rodape (faixa embaixo), cta (chamada final). Máximo 7 palavras por texto.
+  Estilos especiais do formato "isso → nisso" (partes separadas por |):
+  aviso ("Simulação com IA · não é consulta médica"; fica o vídeo todo, use quando houver antes/depois ou tema de saúde),
+  pergunta ("Pergunta|Resposta", estilo caixinha de perguntas do Instagram, no começo),
+  isso_nisso ("isso|nisso", dois quadros no topo para as imagens de antes e depois; dure de 5 a 9s),
+  produto ("NOME DO PRODUTO OU AÇÃO|etiqueta1|etiqueta2|etiqueta3", o "use isso"; etiquetas curtas tipo manhã, noite, 2x ao dia),
+  rotina ("Sua rotina|item1|item2|item3", checklist que vai sendo marcado; perto do fim),
+  final ("@perfil|frase curta", tela final escurecida com o @; últimos 2–3s). As legendas do que é falado são geradas automaticamente: NÃO repita a fala inteira em texts.
 - scenes: uma linha por cena para mostrar ao usuário o que você fez (title curto + desc de 1 frase explicando a decisão).
 - summary: 1 ou 2 frases, em português, dizendo o que você fez. Fale com o usuário, sem jargão técnico.
 
@@ -149,14 +158,9 @@ def compact_plan(timeline: dict) -> str:
 
 def request_plan(config: dict, transcript: dict, info: dict, preset: dict,
                  user_request: str = "", current_timeline: dict | None = None) -> tuple[dict, dict]:
-    api_key = config.get("api_key")
-    if not api_key:
-        raise AIError("Coloque sua chave da API da Anthropic em ⚙️ Configurações.")
-    model = config.get("model") or DEFAULT_MODEL
-    if model not in MODELS:
-        model = DEFAULT_MODEL
-
     tail = [preset_block(preset)]
+    if brand_text := brandkit.prompt_block():
+        tail.append(brand_text)
     if current_timeline is not None:
         tail.append("PLANO ATUAL:\n" + compact_plan(current_timeline))
     tail.append("PEDIDO DO USUÁRIO: " + (user_request.strip() or "Edite o vídeo seguindo o modelo."))
@@ -168,15 +172,26 @@ def request_plan(config: dict, transcript: dict, info: dict, preset: dict,
          "cache_control": {"type": "ephemeral"}},
         {"type": "text", "text": "\n\n".join(tail)},
     ]
+    return call_json(config, SYSTEM_PROMPT, content, PLAN_SCHEMA)
+
+
+def call_json(config: dict, system: str, content: list, schema: dict) -> tuple[dict, dict]:
+    """Uma chamada ao Claude que devolve JSON validado pelo schema + o relatório de gasto."""
+    api_key = config.get("api_key")
+    if not api_key:
+        raise AIError("Coloque sua chave da API da Anthropic em ⚙️ Configurações.")
+    model = config.get("model") or DEFAULT_MODEL
+    if model not in MODELS:
+        model = DEFAULT_MODEL
     params = dict(
         model=model,
         max_tokens=16000,
-        system=SYSTEM_PROMPT,
+        system=system,
         messages=[{"role": "user", "content": content}],
         thinking={"type": "adaptive"},
         output_config={
             "effort": config.get("effort") or "medium",
-            "format": {"type": "json_schema", "schema": PLAN_SCHEMA},
+            "format": {"type": "json_schema", "schema": schema},
         },
     )
     if model != "claude-haiku-5-5":
@@ -209,11 +224,10 @@ def request_plan(config: dict, transcript: dict, info: dict, preset: dict,
         raise AIError("A resposta da IA ficou grande demais. Tente um pedido mais simples.")
     text = next((b.text for b in response.content if b.type == "text"), "")
     try:
-        plan = json.loads(text)
+        data = json.loads(text)
     except json.JSONDecodeError:
         raise AIError("A IA respondeu num formato inesperado. Tente de novo.")
-
-    return plan, usage_report(response.model or model, response.usage)
+    return data, usage_report(response.model or model, response.usage)
 
 
 def usage_report(model: str, usage) -> dict:

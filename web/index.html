@@ -16,9 +16,10 @@
     <div class="tb-left">
       <div class="logo"><span class="logo-mark">E</span>Edita Fácil</div>
       <nav class="menu">
-        <button data-action="new">Novo vídeo</button>
-        <button data-action="undo" title="Ctrl+Z">Desfazer</button>
-        <button data-action="export">Exportar</button>
+        <a href="/" class="active">Editor</a>
+        <a href="/studio.html">✦ Criar com IA</a>
+        <a href="/marca.html">Minha marca</a>
+        <a href="/tour.html">Tour 3D</a>
       </nav>
     </div>
     <div class="tb-center">
@@ -26,6 +27,8 @@
       <div class="proj-sub" id="projSub">Envie um vídeo cru para começar</div>
     </div>
     <div class="tb-right">
+      <button data-action="new">+ Novo vídeo</button>
+      <button data-action="export" class="primary">Exportar</button>
       <span class="spec" id="spec">—</span>
       <span class="conn" id="conn"><i class="dot"></i><span>Claude — sem chave</span></span>
       <button class="icon-btn" data-action="settings" title="Configurações">⚙</button>
@@ -39,6 +42,7 @@
       <button class="rail-btn" data-panel="modelos" title="Modelos">✦<small>Modelos</small></button>
       <button class="rail-btn" data-panel="texto" title="Texto">T<small>Texto</small></button>
       <button class="rail-btn" data-panel="audio" title="Áudio">♫<small>Áudio</small></button>
+      <button class="rail-btn" data-panel="fundo" title="Fundo">◐<small>Fundo</small></button>
       <button class="rail-btn" data-panel="inspetor" title="Inspetor">◧<small>Ajustes</small></button>
     </div>
     <div class="panel">
@@ -59,6 +63,8 @@
         <h3>Adicionar texto</h3>
         <p class="hint">Entra na posição da agulha (playhead).</p>
         <div class="text-styles" id="textStyles"></div>
+        <h3>Formato isso → nisso</h3>
+        <div class="text-styles" id="richStyles"></div>
         <h3>Legendas</h3>
         <label class="row"><input type="checkbox" id="capEnabled"> Mostrar legendas</label>
         <label class="field">Estilo
@@ -66,6 +72,7 @@
             <option value="viral">Viral (palavra destacada)</option>
             <option value="limpa">Limpa</option>
             <option value="apple">Minimalista</option>
+            <option value="palavra">Uma palavra por vez</option>
           </select>
         </label>
         <label class="field">Posição
@@ -76,6 +83,31 @@
           </select>
         </label>
         <label class="field">Palavras por vez <input type="range" id="capWords" min="1" max="8"><output id="capWordsOut"></output></label>
+        <h3>Marca</h3>
+        <label class="row"><input type="checkbox" id="logoEnabled"> Mostrar minha logo no canto</label>
+        <p class="hint">Cores, logo e avatar ficam em <a href="/marca.html">Minha marca</a>.</p>
+      </section>
+      <section data-panel="fundo">
+        <h3>Trocar o fundo</h3>
+        <p class="hint">A IA separa você do fundo quadro a quadro, no seu PC. Seu rosto e sua voz <b>não são alterados</b>: só o fundo muda.</p>
+        <label class="field">Novo fundo
+          <select id="bgMode">
+            <option value="desfoque">Desfocar o fundo atual</option>
+            <option value="marca">Degradê com as cores da marca</option>
+            <option value="cor">Cor sólida</option>
+            <option value="imagem">Uma imagem</option>
+          </select>
+        </label>
+        <label class="field" id="bgColorRow">Cor <input type="color" id="bgColor" value="#111111"></label>
+        <label class="drop" id="bgImageRow">
+          <input type="file" accept="image/*" hidden id="bgImage">
+          <b>+ Escolher imagem</b><span id="bgImageName">JPG ou PNG</span>
+        </label>
+        <div class="row-btns">
+          <button class="primary" id="bgApply">Aplicar fundo</button>
+          <button id="bgReset">Voltar ao original</button>
+        </div>
+        <p class="hint">Leva uns 3 minutos por minuto de vídeo. Funciona melhor com a pessoa bem iluminada.</p>
       </section>
       <section data-panel="audio">
         <h3>Música de fundo</h3>
@@ -110,6 +142,7 @@
     <div class="stage" id="stage">
       <div class="frame" id="frame">
         <video id="video" playsinline preload="auto"></video>
+        <img class="ov-logo" id="ovLogo" alt="" hidden>
         <div class="ov-texts" id="ovTexts"></div>
         <div class="ov-caption" id="ovCaption"></div>
       </div>
@@ -176,6 +209,7 @@
         <button data-action="split" title="Dividir na agulha (S)">✂ Dividir</button>
         <button data-action="delete" title="Apagar selecionado (Delete)">🗑 Apagar</button>
         <button data-action="zoomclip" title="Alternar zoom do clip (Z)">🔍 Zoom</button>
+        <button data-action="undo" title="Desfazer (Ctrl+Z)">↶ Desfazer</button>
       </div>
       <div class="tl-info" id="tlInfo"></div>
       <label class="tl-zoom">− <input type="range" id="tlZoom" min="10" max="300" value="60"> +</label>
@@ -241,6 +275,10 @@
       <input type="password" id="cfgKey" placeholder="sk-ant-…" autocomplete="off">
     </label>
     <p class="hint">Crie em <b>console.anthropic.com</b> → API Keys. Fica salva só no seu computador (config.json).</p>
+    <label class="field">Chave da ElevenLabs (vozes) — opcional
+      <input type="password" id="cfgEl" placeholder="sk_…" autocomplete="off">
+    </label>
+    <p class="hint">Para narrar e clonar a sua voz. Crie em <b>elevenlabs.io</b> → Developers → API Keys.</p>
     <label class="field">Modelo de IA <select id="cfgModel"></select></label>
     <label class="field">Capricho da IA
       <select id="cfgEffort">

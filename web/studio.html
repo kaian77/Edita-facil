@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Criar com IA · Edita Fácil</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="pages.css">
+</head>
+<body class="page">
+<header class="topbar">
+  <div class="tb-left">
+    <div class="logo"><span class="logo-mark">E</span>Edita Fácil</div>
+    <nav class="menu">
+      <a href="/">Editor</a>
+      <a href="/studio.html" class="active">✦ Criar com IA</a>
+      <a href="/marca.html">Minha marca</a>
+      <a href="/tour.html">Tour 3D</a>
+    </nav>
+  </div>
+</header>
+
+<div class="wrap">
+  <h1>Criar com IA</h1>
+  <p class="lead">Sem gravar nada: você manda o tema e a IA faz roteiro, narração com a sua voz, animações e legenda. Ou mande um vídeo que você gostou e a IA copia o estilo para o seu tema.</p>
+
+  <div class="tabs">
+    <button class="active" data-tab="tema">✦ Só o tema</button>
+    <button data-tab="ref">🎯 Copiar um vídeo que gostei</button>
+  </div>
+
+  <section data-tab="tema">
+    <div class="grid2">
+      <div class="card">
+        <h2>Sobre o que é o vídeo?</h2>
+        <label class="field">Tema
+          <textarea id="theme" rows="3" placeholder="ex.: 3 erros que mancham os dentes e como evitar"></textarea>
+        </label>
+        <div class="grid-fields">
+          <label class="field">Duração
+            <select id="seconds">
+              <option value="20">~20 segundos</option>
+              <option value="30">~30 segundos</option>
+              <option value="45" selected>~45 segundos</option>
+              <option value="60">~1 minuto</option>
+              <option value="90">~1min30</option>
+            </select>
+          </label>
+          <label class="field">Formato
+            <select id="format">
+              <option value="9:16">9:16 Reels/TikTok</option>
+              <option value="1:1">1:1 Feed</option>
+              <option value="4:5">4:5 Feed</option>
+              <option value="16:9">16:9 YouTube</option>
+            </select>
+          </label>
+          <label class="field">Voz
+            <select id="voice"><option value="">Sem narração (só texto e música)</option></select>
+          </label>
+          <label class="field">Estilo
+            <select id="style"><option value="">Automático</option></select>
+          </label>
+          <label class="field">Música
+            <select id="music"><option value="">Sem música</option></select>
+          </label>
+        </div>
+        <label class="field">Algo mais? (opcional)
+          <textarea id="extra" rows="2" placeholder="ex.: tom divertido, termine chamando para o link da bio"></textarea>
+        </label>
+        <div class="warn" id="themeWarn" hidden></div>
+        <button class="primary big-btn" id="create">✦ Criar vídeo</button>
+      </div>
+      <div>
+        <div class="card">
+          <h2>O que a IA vai fazer</h2>
+          <ol class="steps">
+            <li><b>Roteiro</b> com gancho forte, cenas curtas e CTA (Claude).</li>
+            <li><b>Narração</b> com a voz escolhida — pode ser a sua voz clonada (ElevenLabs).</li>
+            <li><b>Animações</b>: textos com giro 3D, número contando, listas, citações, formas 3D, barra de progresso.</li>
+            <li><b>Sua marca</b>: cores, logo, avatar e @ em todas as cenas.</li>
+            <li>Abre no <b>editor</b> com legenda pronta para você ajustar ou só exportar.</li>
+          </ol>
+          <p class="hint" id="brandHint"></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section data-tab="ref" hidden>
+    <div class="grid2">
+      <div class="card">
+        <h2>Mande o vídeo que você gostou</h2>
+        <p class="hint">A IA estuda a <b>fórmula</b> (estrutura, gancho, ritmo dos cortes, estilo dos textos e da legenda) e transforma num estilo seu. Ela não copia as falas nem as imagens.</p>
+        <label class="drop" id="refDrop">
+          <input type="file" accept="video/*" hidden id="refFile">
+          <b>+ Escolher vídeo de referência</b><span>Baixe o vídeo e envie aqui (MP4, MOV)</span>
+        </label>
+        <label class="row"><input type="checkbox" id="refFrames" checked> Deixar a IA ver 6 quadros do vídeo (entende melhor o visual; ~4 mil tokens)</label>
+        <div class="progress" id="refProgress" hidden>
+          <p class="hint" id="refStatus"></p>
+          <div class="bar"><i id="refBar"></i></div>
+        </div>
+      </div>
+      <div>
+        <div class="card recipe" id="recipe" hidden></div>
+        <div class="card">
+          <h2>Seus estilos salvos</h2>
+          <ul class="list" id="styles"></ul>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+<div class="toast" id="toast"></div>
+<script src="common.js"></script>
+<script src="studio.js"></script>
+</body>
+</html>

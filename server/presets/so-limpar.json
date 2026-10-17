@@ -1,0 +1,17 @@
+{
+  "id": "so-limpar",
+  "name": "Só limpar",
+  "icon": "🧹",
+  "order": 6,
+  "description": "O básico bem feito: remove silêncios e erros, sem efeitos, sem textos. Rápido e barato.",
+  "format": "original",
+  "captions": {
+    "enabled": false,
+    "style": "limpa",
+    "position": "bottom",
+    "words": 6
+  },
+  "music_volume": 0.0,
+  "max_seconds": 0,
+  "instructions": "Remova apenas silêncios, gaguejadas, frases recomeçadas e repetições. Não reordene, não adicione textos, não use zoom (zoom sempre 1.0). Mantenha a ordem original."
+}

@@ -1,0 +1,17 @@
+{
+  "id": "isso-nisso",
+  "name": "Profissional: Isso → Nisso",
+  "icon": "✨",
+  "order": 3,
+  "description": "Estrutura viral de antes e depois para dentista, nutri, dermato, personal etc.: problema → resultado → 'use isso'.",
+  "format": "9:16",
+  "captions": {
+    "enabled": true,
+    "style": "viral",
+    "position": "middle",
+    "words": 3
+  },
+  "music_volume": 0.12,
+  "max_seconds": 60,
+  "instructions": "Organize o vídeo na estrutura: 1) PROBLEMA ('se você tem isso...'), 2) TRANSFORMAÇÃO ('...e quer chegar nisso'), 3) SOLUÇÃO ('use isso / faça isso'), 4) CTA (seguir, salvar, agendar). Reordene os trechos se precisar. Coloque textos 'gancho' marcando cada etapa (ex.: 'ANTES', 'DEPOIS', 'O SEGREDO'). Corte pausas e repetições sem dó. Linguagem de autoridade, mas simples."
+}

@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Edita Fácil</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%228%22 fill=%22%23ff6b3d%22/%3E%3Ctext x=%2216%22 y=%2223%22 font-size=%2218%22 font-family=%22sans-serif%22 font-weight=%22800%22 fill=%22white%22 text-anchor=%22middle%22%3EE%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+  <!-- Barra superior -->
+  <header class="topbar">
+    <div class="tb-left">
+      <div class="logo"><span class="logo-mark">E</span>Edita Fácil</div>
+      <nav class="menu">
+        <button data-action="new">Novo vídeo</button>
+        <button data-action="undo" title="Ctrl+Z">Desfazer</button>
+        <button data-action="export">Exportar</button>
+      </nav>
+    </div>
+    <div class="tb-center">
+      <div class="proj-name" id="projName">Nenhum projeto</div>
+      <div class="proj-sub" id="projSub">Envie um vídeo cru para começar</div>
+    </div>
+    <div class="tb-right">
+      <span class="spec" id="spec">—</span>
+      <span class="conn" id="conn"><i class="dot"></i><span>Claude — sem chave</span></span>
+      <button class="icon-btn" data-action="settings" title="Configurações">⚙</button>
+    </div>
+  </header>
+
+  <!-- Painel esquerdo -->
+  <aside class="left">
+    <div class="rail">
+      <button class="rail-btn active" data-panel="midia" title="Mídia">▣<small>Mídia</small></button>
+      <button class="rail-btn" data-panel="modelos" title="Modelos">✦<small>Modelos</small></button>
+      <button class="rail-btn" data-panel="texto" title="Texto">T<small>Texto</small></button>
+      <button class="rail-btn" data-panel="audio" title="Áudio">♫<small>Áudio</small></button>
+      <button class="rail-btn" data-panel="inspetor" title="Inspetor">◧<small>Ajustes</small></button>
+    </div>
+    <div class="panel">
+      <section data-panel="midia" class="active">
+        <h3>Projetos</h3>
+        <label class="drop" id="dropSmall">
+          <input type="file" accept="video/*" hidden id="fileInput">
+          <b>+ Enviar vídeo cru</b><span>MP4, MOV, MKV…</span>
+        </label>
+        <ul class="proj-list" id="projList"></ul>
+      </section>
+      <section data-panel="modelos">
+        <h3>Modelos prontos</h3>
+        <p class="hint">Escolha o estilo e a IA edita tudo sozinha.</p>
+        <div class="preset-list" id="presetList"></div>
+      </section>
+      <section data-panel="texto">
+        <h3>Adicionar texto</h3>
+        <p class="hint">Entra na posição da agulha (playhead).</p>
+        <div class="text-styles" id="textStyles"></div>
+        <h3>Legendas</h3>
+        <label class="row"><input type="checkbox" id="capEnabled"> Mostrar legendas</label>
+        <label class="field">Estilo
+          <select id="capStyle">
+            <option value="viral">Viral (palavra destacada)</option>
+            <option value="limpa">Limpa</option>
+            <option value="apple">Minimalista</option>
+          </select>
+        </label>
+        <label class="field">Posição
+          <select id="capPos">
+            <option value="middle">Meio-baixo</option>
+            <option value="bottom">Embaixo</option>
+            <option value="top">Topo</option>
+          </select>
+        </label>
+        <label class="field">Palavras por vez <input type="range" id="capWords" min="1" max="8"><output id="capWordsOut"></output></label>
+      </section>
+      <section data-panel="audio">
+        <h3>Música de fundo</h3>
+        <label class="drop">
+          <input type="file" accept="audio/*" hidden id="musicInput">
+          <b>+ Enviar música</b><span>MP3, WAV, M4A</span>
+        </label>
+        <ul class="music-list" id="musicList"></ul>
+        <label class="row"><input type="checkbox" id="musicEnabled"> Usar música</label>
+        <label class="row"><input type="checkbox" id="musicDuck"> Abaixar quando eu falar</label>
+        <label class="field">Volume <input type="range" id="musicVol" min="0" max="0.6" step="0.01"><output id="musicVolOut"></output></label>
+      </section>
+      <section data-panel="inspetor">
+        <h3>Ajustes</h3>
+        <div id="inspector"><p class="hint">Clique num clip ou texto da timeline.</p></div>
+      </section>
+    </div>
+  </aside>
+
+  <!-- Visualizador -->
+  <main class="viewer">
+    <div class="viewer-head">
+      <span id="viewerLabel">Visualização</span>
+      <select id="formatSel" title="Formato">
+        <option value="9:16">9:16 Reels/TikTok</option>
+        <option value="16:9">16:9 YouTube</option>
+        <option value="1:1">1:1 Feed</option>
+        <option value="4:5">4:5 Feed</option>
+        <option value="original">Original</option>
+      </select>
+    </div>
+    <div class="stage" id="stage">
+      <div class="frame" id="frame">
+        <video id="video" playsinline preload="auto"></video>
+        <div class="ov-texts" id="ovTexts"></div>
+        <div class="ov-caption" id="ovCaption"></div>
+      </div>
+      <div class="empty" id="emptyState">
+        <label class="drop big" id="dropBig">
+          <input type="file" accept="video/*" hidden>
+          <div class="big-icon">⬆</div>
+          <b>Arraste seu vídeo cru aqui</b>
+          <span>ou clique para escolher. A IA corta, legenda e monta tudo sozinha.</span>
+        </label>
+      </div>
+      <div class="busy" id="busy" hidden>
+        <div class="spinner"></div>
+        <div id="busyText">Analisando…</div>
+        <div class="bar"><i id="busyBar"></i></div>
+      </div>
+    </div>
+    <div class="transport">
+      <span class="tc" id="tc">00:00:00</span>
+      <div class="tp-btns">
+        <button data-action="start" title="Início">⏮</button>
+        <button data-action="back" title="-1s">◀◀</button>
+        <button data-action="play" id="playBtn" title="Espaço">▶</button>
+        <button data-action="fwd" title="+1s">▶▶</button>
+        <button data-action="end" title="Fim">⏭</button>
+      </div>
+      <span class="tc dim" id="dur">duração 00:00</span>
+    </div>
+  </main>
+
+  <!-- Painel do Claude -->
+  <aside class="claude">
+    <div class="cl-head">
+      <div class="cl-avatar">C</div>
+      <div>
+        <div class="cl-title">Claude <span id="clModel">Opus 5.5</span></div>
+        <div class="cl-status" id="clStatus"><i class="dot"></i>aguardando vídeo</div>
+      </div>
+      <div class="cl-cost" id="clCost" title="Gasto com IA neste projeto"></div>
+    </div>
+    <div class="cl-body" id="chat"></div>
+    <div class="cl-input">
+      <div class="chips" id="chips">
+        <button>Deixe mais curto</button>
+        <button>Mais zoom e ritmo</button>
+        <button>Gancho mais forte</button>
+        <button>Tire os textos</button>
+      </div>
+      <div class="ai-row">
+        <select id="presetSel" title="Modelo de edição"></select>
+        <button class="primary" id="autoBtn">✦ Editar com IA</button>
+      </div>
+      <form id="chatForm">
+        <textarea id="chatText" rows="2" placeholder="Peça uma alteração… ex.: “corta a parte que eu falo do preço”"></textarea>
+        <button type="submit" class="send" title="Enviar">➤</button>
+      </form>
+    </div>
+  </aside>
+
+  <!-- Timeline -->
+  <section class="timeline">
+    <div class="tl-toolbar">
+      <div class="tl-tools">
+        <button data-action="split" title="Dividir na agulha (S)">✂ Dividir</button>
+        <button data-action="delete" title="Apagar selecionado (Delete)">🗑 Apagar</button>
+        <button data-action="zoomclip" title="Alternar zoom do clip (Z)">🔍 Zoom</button>
+      </div>
+      <div class="tl-info" id="tlInfo"></div>
+      <label class="tl-zoom">− <input type="range" id="tlZoom" min="10" max="300" value="60"> +</label>
+    </div>
+    <div class="tl-body">
+      <div class="tl-heads">
+        <div class="tl-ruler-head"></div>
+        <div class="th">Cenas</div>
+        <div class="th">Texto</div>
+        <div class="th">Legenda</div>
+        <div class="th tall">Vídeo</div>
+        <div class="th">Áudio</div>
+        <div class="th">Música</div>
+      </div>
+      <div class="tl-scroll" id="tlScroll">
+        <div class="tl-content" id="tlContent">
+          <div class="ruler" id="ruler"></div>
+          <div class="track" id="trScenes"></div>
+          <div class="track" id="trTexts"></div>
+          <div class="track" id="trCaps"></div>
+          <div class="track tall" id="trVideo"></div>
+          <div class="track" id="trAudio"></div>
+          <div class="track" id="trMusic"></div>
+          <div class="playhead" id="playhead"><i></i></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="pages">
+    <button data-page="midia">Mídia</button>
+    <button data-page="modelos">Modelos</button>
+    <button data-page="edicao" class="active">Edição</button>
+    <button data-page="audio">Áudio</button>
+    <button data-page="exportar">Exportar</button>
+  </footer>
+</div>
+
+<!-- Envio de vídeo -->
+<dialog id="uploadDlg">
+  <form method="dialog" class="dlg">
+    <h2>Novo vídeo</h2>
+    <p class="file-name" id="upName"></p>
+    <label class="field">Modelo de edição <select id="upPreset"></select></label>
+    <p class="hint" id="upPresetDesc"></p>
+    <label class="field">Instrução extra (opcional)
+      <textarea id="upExtra" rows="2" placeholder="ex.: sou dentista, fale de clareamento; termine com 'agende sua avaliação'"></textarea>
+    </label>
+    <label class="row"><input type="checkbox" id="upAuto" checked> Editar com IA automaticamente quando terminar a análise</label>
+    <label class="row"><input type="checkbox" id="upExport"> Exportar o vídeo final automaticamente</label>
+    <div class="dlg-actions">
+      <button value="cancel">Cancelar</button>
+      <button value="ok" class="primary" id="upGo">Enviar e editar</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Configurações -->
+<dialog id="settingsDlg">
+  <form method="dialog" class="dlg">
+    <h2>Configurações</h2>
+    <label class="field">Chave da API da Anthropic
+      <input type="password" id="cfgKey" placeholder="sk-ant-…" autocomplete="off">
+    </label>
+    <p class="hint">Crie em <b>console.anthropic.com</b> → API Keys. Fica salva só no seu computador (config.json).</p>
+    <label class="field">Modelo de IA <select id="cfgModel"></select></label>
+    <label class="field">Capricho da IA
+      <select id="cfgEffort">
+        <option value="low">Rápido (gasta menos)</option>
+        <option value="medium">Equilibrado (recomendado)</option>
+        <option value="high">Caprichado (gasta mais)</option>
+      </select>
+    </label>
+    <label class="field">Idioma da fala
+      <select id="cfgLang">
+        <option value="pt">Português</option>
+        <option value="es">Espanhol</option>
+        <option value="en">Inglês</option>
+        <option value="">Detectar</option>
+      </select>
+    </label>
+    <p class="hint" id="cfgWhisper"></p>
+    <div class="dlg-actions">
+      <button value="cancel">Cancelar</button>
+      <button value="ok" class="primary">Salvar</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Exportar -->
+<dialog id="exportDlg">
+  <form method="dialog" class="dlg">
+    <h2>Exportar vídeo</h2>
+    <p class="hint" id="expInfo"></p>
+    <label class="field">Qualidade
+      <select id="expQuality">
+        <option value="alta">Alta (mais lento)</option>
+        <option value="media" selected>Média</option>
+        <option value="rapida">Rascunho rápido</option>
+      </select>
+    </label>
+    <div class="bar"><i id="expBar"></i></div>
+    <p id="expStatus" class="hint"></p>
+    <div class="exp-links" id="expLinks"></div>
+    <div class="dlg-actions">
+      <button value="cancel">Fechar</button>
+      <button type="button" class="primary" id="expGo">Renderizar</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="toast" id="toast"></div>
+<script src="app.js"></script>
+</body>
+</html>

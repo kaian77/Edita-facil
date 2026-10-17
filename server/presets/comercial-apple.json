@@ -1,0 +1,17 @@
+{
+  "id": "comercial-apple",
+  "name": "Comercial estilo Apple",
+  "icon": "◻️",
+  "order": 2,
+  "description": "Minimalista: poucas palavras na tela, textos grandes e centralizados, ritmo calmo, sem legenda corrida.",
+  "format": "9:16",
+  "captions": {
+    "enabled": false,
+    "style": "apple",
+    "position": "middle",
+    "words": 4
+  },
+  "music_volume": 0.25,
+  "max_seconds": 45,
+  "instructions": "Estilo comercial Apple: elegante, frases curtas, muito respiro. Mantenha só os melhores trechos, sem pressa. Use textos de título curtos (2 a 5 palavras), um por cena, estilo 'titulo', centralizados — eles contam a história mesmo sem som. Zoom suave (1.0 a 1.08) só em momentos-chave. Termine com um texto de assinatura/marca (ex.: nome do produto + slogan curto)."
+}

@@ -1,0 +1,17 @@
+{
+  "id": "reels-viral",
+  "name": "Reels Viral",
+  "icon": "🔥",
+  "order": 1,
+  "description": "Jump cuts rápidos, legenda estilo TikTok com palavra destacada, zooms de ênfase e gancho forte nos 2 primeiros segundos.",
+  "format": "9:16",
+  "captions": {
+    "enabled": true,
+    "style": "viral",
+    "position": "middle",
+    "words": 3
+  },
+  "music_volume": 0.12,
+  "max_seconds": 90,
+  "instructions": "Objetivo: reter a atenção até o fim. Corte TODAS as pausas, gaguejadas, repetições, frases recomeçadas e trechos fracos. Comece pela frase mais impactante (gancho) se ela não estiver no início — você pode reordenar trechos. Coloque um texto de gancho grande nos primeiros 2s (máx. 6 palavras). Alterne zoom 1.0 e 1.12–1.2 a cada 1 a 3 trechos para dar ritmo. Adicione 1 a 3 textos de destaque nas frases-chave e um CTA curto no final se fizer sentido."
+}

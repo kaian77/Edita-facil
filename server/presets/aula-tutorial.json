@@ -1,0 +1,17 @@
+{
+  "id": "aula-tutorial",
+  "name": "Aula / Tutorial",
+  "icon": "🎓",
+  "order": 5,
+  "description": "Mantém todo o conteúdo, só tira silêncios, erros e repetições. Legenda limpa. Bom para YouTube.",
+  "format": "original",
+  "captions": {
+    "enabled": true,
+    "style": "limpa",
+    "position": "bottom",
+    "words": 7
+  },
+  "music_volume": 0.06,
+  "max_seconds": 0,
+  "instructions": "Mantenha TODO o conteúdo didático na ordem original. Remova só: silêncios, erros, frases recomeçadas (fique com a última tentativa, que geralmente é a melhor) e repetições. Coloque textos 'rodape' com o título de cada tópico novo. Zoom quase nunca (no máximo 1.06 para ênfase)."
+}

@@ -1,0 +1,17 @@
+{
+  "id": "corte-podcast",
+  "name": "Corte de Podcast",
+  "icon": "🎙️",
+  "order": 4,
+  "description": "Encontra o trecho mais forte (30–60s) de uma conversa longa e transforma num corte vertical com legenda.",
+  "format": "9:16",
+  "captions": {
+    "enabled": true,
+    "style": "viral",
+    "position": "bottom",
+    "words": 4
+  },
+  "music_volume": 0.0,
+  "max_seconds": 60,
+  "instructions": "Escolha UM trecho contínuo (ou quase contínuo) de 30 a 60 segundos com a ideia mais polêmica, útil ou emocionante — precisa fazer sentido sozinho, com começo, meio e fim. Corte pausas e muletas ('é...', 'tipo', 'né'). Coloque um texto de gancho no início resumindo o tema em até 7 palavras. Zoom 1.1 em momentos de ênfase."
+}

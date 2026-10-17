@@ -263,6 +263,20 @@ def ass_style(W: int) -> str:
             f"0,0,0,0,100,100,0,0,1,0,0,5,{m},{m},0,1")
 
 
+FONTS = Path(__file__).resolve().parent / "fonts"
+
+
+def ass_filter(ass_name: str, workdir: Path) -> str:
+    """Filtro de legenda usando a fonte Inter que vem com o app (o vídeo sai igual em qualquer PC)."""
+    import os
+
+    try:
+        rel = os.path.relpath(FONTS.resolve(), workdir.resolve()).replace("\\", "/")
+    except ValueError:  # outro disco no Windows
+        return f"ass={ass_name}"
+    return f"ass={ass_name}:fontsdir={rel}" if ":" not in rel else f"ass={ass_name}"
+
+
 def mask_png(project_dir: Path, w: int, h: int, r: int) -> Path:
     """Máscara de canto arredondado para o vidro e as imagens."""
     from PIL import Image, ImageDraw

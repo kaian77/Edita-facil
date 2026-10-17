@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0e0f13">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Edita Fácil">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg">
+<link rel="apple-touch-icon" href="icon.svg">
+<title>Edita Fácil</title>
+<link rel="stylesheet" href="celular.css">
+</head>
+<body>
+<header class="bar">
+  <div class="logo"><span>E</span>Edita Fácil</div>
+  <button class="icon" id="cfgBtn" aria-label="Configurações">⚙</button>
+</header>
+
+<main>
+  <!-- EDITAR -->
+  <section data-view="editar" class="view">
+    <h1>Editar meu vídeo</h1>
+    <label class="pick" id="pick">
+      <input type="file" accept="video/*" id="file" hidden>
+      <video id="pickPreview" muted playsinline hidden></video>
+      <div class="pick-empty" id="pickEmpty"><b>＋</b><span>Escolher vídeo da galeria</span><small>ou gravar agora</small></div>
+    </label>
+    <h2>Estilo</h2>
+    <div class="styles" id="styles"></div>
+    <h2>Algum pedido? <small>(opcional)</small></h2>
+    <textarea id="extra" rows="2" placeholder="ex.: sou dentista, termine com “agende sua avaliação”"></textarea>
+    <button class="go" id="goEdit">✦ Editar sozinho</button>
+    <p class="note">Pode fechar o app enquanto edita. O vídeo pronto aparece em <b>Meus vídeos</b>.</p>
+  </section>
+
+  <!-- CRIAR -->
+  <section data-view="criar" class="view" hidden>
+    <h1>Criar sem gravar</h1>
+    <p class="note">Escreva o tema e a IA faz roteiro, narração, animações e legenda com a sua marca.</p>
+    <textarea id="theme" rows="3" placeholder="ex.: 3 erros que mancham os dentes"></textarea>
+    <h2>Duração</h2>
+    <div class="chips" id="secs">
+      <button data-s="20">20s</button><button data-s="30">30s</button><button data-s="45" class="on">45s</button><button data-s="60">1 min</button>
+    </div>
+    <h2>Voz</h2>
+    <select id="voice"><option value="">Sem narração</option></select>
+    <h2>Estilo</h2>
+    <select id="cStyle"><option value="">Automático</option></select>
+    <button class="go" id="goCreate">✦ Criar vídeo</button>
+  </section>
+
+  <!-- MEUS VÍDEOS -->
+  <section data-view="videos" class="view" hidden>
+    <h1>Meus vídeos</h1>
+    <ul class="list" id="list"></ul>
+  </section>
+
+  <!-- DETALHE -->
+  <section data-view="detalhe" class="view" hidden>
+    <button class="back" id="back">‹ Meus vídeos</button>
+    <h1 id="dName"></h1>
+    <ol class="steps" id="steps"></ol>
+    <div class="bar-p" id="dBarBox" hidden><i id="dBar"></i></div>
+    <div id="done" hidden>
+      <video id="final" controls playsinline></video>
+      <div class="row">
+        <button class="go" id="share">Compartilhar</button>
+        <a class="btn" id="download">Baixar</a>
+      </div>
+      <div class="caption" id="caption" hidden></div>
+    </div>
+    <div class="err" id="dErr" hidden></div>
+    <div id="adjust" hidden>
+      <h2>Quer mudar algo?</h2>
+      <div class="chips" id="quick">
+        <button>Deixe mais curto</button><button>Mais zoom e ritmo</button><button>Gancho mais forte</button><button>Tire os textos</button>
+      </div>
+      <textarea id="adjText" rows="2" placeholder="ex.: corta a parte que eu falo do preço"></textarea>
+      <button class="go alt" id="goAdj">Pedir ajuste</button>
+      <button class="link" id="exportNow" hidden>Exportar vídeo</button>
+    </div>
+    <a class="link" id="openFull">Abrir no editor completo</a>
+  </section>
+</main>
+
+<nav class="tabs">
+  <button data-go="editar" class="on"><b>✂</b>Editar</button>
+  <button data-go="criar"><b>✦</b>Criar</button>
+  <button data-go="videos"><b>▤</b>Meus vídeos</button>
+</nav>
+
+<dialog id="cfg">
+  <form method="dialog">
+    <h2>Configurações</h2>
+    <label>Chave da Anthropic <input type="password" id="kA" placeholder="sk-ant-…" autocomplete="off"></label>
+    <label>Chave da ElevenLabs (voz) <input type="password" id="kE" placeholder="opcional" autocomplete="off"></label>
+    <p class="note" id="kHint"></p>
+    <div class="row"><button value="cancel" class="btn">Fechar</button><button value="ok" class="go">Salvar</button></div>
+    <a class="link" href="/marca.html">Minha marca (cores, logo, voz)</a>
+  </form>
+</dialog>
+<div class="toast" id="toast"></div>
+<script src="common.js"></script>
+<script src="celular.js"></script>
+</body>
+</html>

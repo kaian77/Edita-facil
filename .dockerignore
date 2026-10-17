@@ -1,0 +1,7 @@
+.git
+.venv
+projects
+data
+music
+config.json
+__pycache__

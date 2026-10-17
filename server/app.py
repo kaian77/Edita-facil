@@ -1,15 +1,19 @@
 """Edita Fácil — servidor local. Rode com:  python -m server  (na pasta do projeto)."""
+import hashlib
+import hmac
 import json
 import os
+import secrets
 import shutil
+import socket
 import threading
 import time
 import uuid
 from pathlib import Path
 
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.concurrency import run_in_threadpool
-from fastapi.responses import FileResponse, Response
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -31,6 +35,108 @@ MUSIC.mkdir(exist_ok=True)
 _lock = threading.Lock()
 
 app = FastAPI(title="Edita Fácil")
+
+
+# ---------- acesso pelo celular / pela nuvem ----------
+# No próprio PC (127.0.0.1) abre direto. De outro aparelho (celular no Wi-Fi ou internet)
+# pede o PIN que aparece no PC — ou a senha APP_PASSWORD, quando roda na nuvem.
+
+def access_keys() -> tuple[str, str]:
+    cfg = json.loads(CONFIG.read_text(encoding="utf-8")) if CONFIG.exists() else {}
+    changed = False
+    if not cfg.get("pin"):
+        cfg["pin"] = f"{secrets.randbelow(10 ** 6):06d}"
+        changed = True
+    if not cfg.get("cookie_salt"):
+        cfg["cookie_salt"] = secrets.token_hex(16)
+        changed = True
+    if changed:
+        CONFIG.write_text(json.dumps(cfg, indent=2), encoding="utf-8")
+    return os.environ.get("APP_PASSWORD") or cfg["pin"], cfg["cookie_salt"]
+
+
+def _token(password: str, salt: str) -> str:
+    return hmac.new(salt.encode(), password.encode(), hashlib.sha256).hexdigest()
+
+
+def is_local(request: Request) -> bool:
+    host = request.client.host if request.client else ""
+    return host in ("127.0.0.1", "::1", "localhost") and "x-forwarded-for" not in request.headers \
+        and not os.environ.get("APP_PASSWORD")
+
+
+OPEN_PATHS = {"/entrar", "/api/login", "/favicon.ico"}
+_fails: dict = {}
+
+
+@app.middleware("http")
+async def guard(request: Request, call_next):
+    path = request.url.path
+    if is_local(request) or path in OPEN_PATHS:
+        return await call_next(request)
+    password, salt = access_keys()
+    if hmac.compare_digest(request.cookies.get("ef", ""), _token(password, salt)):
+        return await call_next(request)
+    if path.startswith("/api/") or path.startswith("/media/"):
+        return JSONResponse({"detail": "Entre com o PIN primeiro."}, status_code=401)
+    return RedirectResponse("/entrar")
+
+
+LOGIN_HTML = """<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1"><title>Entrar · Edita Fácil</title>
+<style>:root{color-scheme:dark}body{margin:0;min-height:100vh;display:grid;place-items:center;background:#0e0f13;color:#eee;
+font:16px/1.4 system-ui,sans-serif;padding:16px;box-sizing:border-box}form{width:100%;max-width:340px;text-align:center}
+.m{width:56px;height:56px;border-radius:14px;margin:0 auto 14px;background:linear-gradient(135deg,#ff6b3d,#9a6cff);display:grid;
+place-items:center;font-weight:800;font-size:26px}input{width:100%;box-sizing:border-box;font-size:30px;letter-spacing:.3em;text-align:center;
+padding:14px;border-radius:14px;border:1px solid #333;background:#15171d;color:#fff;margin:14px 0}button{width:100%;padding:15px;
+border-radius:14px;border:0;background:#ff6b3d;color:#fff;font-size:17px;font-weight:700}p{color:#999;font-size:14px}#e{color:#ff8a8a}</style>
+</head><body><form id="f"><div class="m">E</div><b>Edita Fácil</b>
+<p>Digite o PIN que aparece no computador<br>(⚙ Configurações → Usar no celular)</p>
+<input id="s" inputmode="numeric" autocomplete="one-time-code" placeholder="••••••" autofocus>
+<button>Entrar</button><p id="e"></p></form>
+<script>document.getElementById('f').onsubmit=async e=>{e.preventDefault();
+const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({senha:document.getElementById('s').value})});
+if(r.ok){location.href=matchMedia('(max-width: 860px)').matches?'/celular.html':'/';}else{document.getElementById('e').textContent=(await r.json()).detail||'PIN errado';}};</script>
+</body></html>"""
+
+
+@app.get("/entrar")
+def login_page():
+    return HTMLResponse(LOGIN_HTML)
+
+
+@app.post("/api/login")
+def login(request: Request, body: dict):
+    ip = request.client.host if request.client else "?"
+    fails, since = _fails.get(ip, (0, 0))
+    if fails >= 8 and time.time() - since < 600:
+        raise HTTPException(429, "Muitas tentativas. Espere 10 minutos.")
+    password, salt = access_keys()
+    if not hmac.compare_digest(str(body.get("senha", "")).strip(), password):
+        _fails[ip] = (fails + 1, time.time())
+        raise HTTPException(401, "PIN errado.")
+    _fails.pop(ip, None)
+    resp = JSONResponse({"ok": True})
+    resp.set_cookie("ef", _token(password, salt), max_age=60 * 60 * 24 * 365, httponly=True, samesite="lax")
+    return resp
+
+
+def lan_ip() -> str:
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sk:
+            sk.connect(("10.255.255.255", 1))
+            return sk.getsockname()[0]
+    except OSError:
+        return "127.0.0.1"
+
+
+@app.get("/api/connect")
+def connect_info(request: Request):
+    if not is_local(request):
+        raise HTTPException(403, "Só aparece no computador.")
+    password, _ = access_keys()
+    port = int(os.environ.get("PORT", "8000"))
+    return {"url": f"http://{lan_ip()}:{port}/celular.html", "pin": password}
 
 
 # ---------- armazenamento ----------
@@ -197,7 +303,8 @@ def list_projects():
 
 
 @app.post("/api/projects")
-async def create_project(file: UploadFile = File(...)):
+async def create_project(file: UploadFile = File(...), auto: bool = Form(False), preset: str = Form(""),
+                         extra: str = Form(""), export: bool = Form(False)):
     ext = Path(file.filename or "").suffix.lower()
     if ext not in VIDEO_EXT:
         raise HTTPException(400, "Formato não suportado. Use MP4, MOV, MKV, WEBM ou AVI.")
@@ -210,10 +317,18 @@ async def create_project(file: UploadFile = File(...)):
     p = {
         "id": pid, "name": Path(file.filename).stem[:60], "created": time.time(),
         "source": f"source{ext}", "status": "analisando", "status_text": "Enviado", "progress": 0,
-        "preset": next(iter(load_presets())), "chat": [], "history": [], "usage_total": 0.0,
+        "preset": preset if preset in load_presets() else next(iter(load_presets())),
+        "chat": [], "history": [], "usage_total": 0.0,
     }
+    if auto:
+        p["auto"] = {"preset": p["preset"], "extra": extra.strip()[:500], "export": export}
+        p["auto_stage"] = "analisando"
     save_project(p)
-    threading.Thread(target=analyze, args=(pid,), daemon=True).start()
+
+    def work():
+        analyze(pid)
+        run_auto(pid)
+    threading.Thread(target=work, daemon=True).start()
     return public(p)
 
 
@@ -234,26 +349,19 @@ def get_peaks(pid: str):
     return json.loads(f.read_text()) if f.exists() else []
 
 
-@app.post("/api/projects/{pid}/edit")
-async def ai_edit(pid: str, body: EditIn):
+def edit_project(pid: str, preset_id: str, request: str = "", fresh: bool = False) -> dict:
+    """A IA edita o projeto (usado pelo editor, pelo celular e pelo modo automático)."""
     p = load_project(pid)
     if p["status"] != "pronto":
-        raise HTTPException(409, "O vídeo ainda está sendo analisado.")
-    presets = load_presets()
-    preset = presets.get(body.preset)
+        raise ValueError("O vídeo ainda está sendo analisado.")
+    preset = load_presets().get(preset_id)
     if not preset:
-        raise HTTPException(400, "Modelo de edição não encontrado.")
+        raise ValueError("Modelo de edição não encontrado.")
     tr = load_transcript(pid)
-    current = None if body.fresh or not p["chat"] else p["timeline"]
-    user_msg = body.request.strip() or f"Editar com o modelo “{preset['name']}”"
-    try:
-        plan, usage = await run_in_threadpool(
-            ai.request_plan, load_config(), tr, p["info"], preset, body.request, current)
-        new_tl = tl.build(plan, tr, p["info"], preset, previous=p["timeline"])
-    except ai.AIError as exc:
-        raise HTTPException(400, str(exc))
-    except (ValueError, KeyError, TypeError) as exc:
-        raise HTTPException(500, f"Não consegui montar a edição: {exc}")
+    current = None if fresh or not p["chat"] else p["timeline"]
+    user_msg = request.strip() or f"Editar com o modelo “{preset['name']}”"
+    plan, usage = ai.request_plan(load_config(), tr, p["info"], preset, request, current)
+    new_tl = tl.build(plan, tr, p["info"], preset, previous=p["timeline"])
 
     p = load_project(pid)  # recarrega: a análise/render pode ter mudado o arquivo
     p["history"] = (p.get("history") or [])[-19:] + [p["timeline"]]
@@ -264,7 +372,41 @@ async def ai_edit(pid: str, body: EditIn):
     p["chat"].append({"role": "ai", "text": plan.get("summary", ""), "scenes": new_tl["scene_spans"],
                       "usage": usage, "duration": new_tl["duration"]})
     save_project(p)
+    return p
+
+
+@app.post("/api/projects/{pid}/edit")
+async def ai_edit(pid: str, body: EditIn):
+    try:
+        p = await run_in_threadpool(edit_project, pid, body.preset, body.request, body.fresh)
+    except ai.AIError as exc:
+        raise HTTPException(400, str(exc))
+    except ValueError as exc:
+        raise HTTPException(409 if "analisado" in str(exc) else 400, str(exc))
+    except (KeyError, TypeError) as exc:
+        raise HTTPException(500, f"Não consegui montar a edição: {exc}")
     return public(p)
+
+
+def run_auto(pid: str):
+    """Modo automático: depois da análise a IA edita e (se pedido) já exporta. Roda no servidor,
+    então dá para fechar o celular e voltar depois."""
+    p = load_project(pid)
+    auto = p.get("auto") or {}
+    if not auto or p["status"] != "pronto":
+        return
+    try:
+        if load_config()["api_key"]:
+            update_project(pid, auto_stage="editando")
+            edit_project(pid, auto.get("preset") or p["preset"], auto.get("extra", ""), fresh=True)
+        else:
+            update_project(pid, auto_note="Sem chave da IA: só tirei os silêncios.")
+        if auto.get("export"):
+            update_project(pid, auto_stage="exportando", render={"status": "renderizando", "progress": 0})
+            _do_render(pid, auto.get("quality", "media"))
+        update_project(pid, auto_stage="pronto")
+    except Exception as exc:
+        update_project(pid, auto_stage="erro", auto_note=str(exc))
 
 
 @app.put("/api/projects/{pid}/timeline")
@@ -452,6 +594,7 @@ class StudioIn(BaseModel):
     preset: str = ""
     extra: str = ""
     music: str = ""
+    auto_export: bool = False
 
 
 def new_project(name: str, preset_id: str, **extra) -> dict:
@@ -513,6 +656,10 @@ def _run_studio(pid: str, body: StudioIn):
              "scenes": t["scene_spans"], "usage": usage, "duration": t["duration"]},
         ]
         save_project(p)
+        if body.auto_export:
+            update_project(pid, auto_stage="exportando", render={"status": "renderizando", "progress": 0})
+            _do_render(pid, "media")
+        update_project(pid, auto_stage="pronto")
     except (ai.AIError, voices.VoiceError) as exc:
         update_project(pid, status="erro", status_text=str(exc))
     except Exception as exc:
@@ -528,7 +675,7 @@ def create_from_theme(body: StudioIn):
         raise HTTPException(400, "Coloque sua chave da API da Anthropic em ⚙️ Configurações.")
     if body.voice_id and not cfg["elevenlabs_key"]:
         raise HTTPException(400, "Para narrar, coloque sua chave da ElevenLabs em ⚙️ Configurações.")
-    p = new_project(body.theme, body.preset, origin="estudio")
+    p = new_project(body.theme, body.preset, origin="estudio", auto_stage="criando")
     threading.Thread(target=_run_studio, args=(p["id"], body), daemon=True).start()
     return public(p)
 

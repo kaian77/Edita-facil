@@ -74,6 +74,11 @@ function captionLines(words, perLine) {
 /* ---------------- inicialização ---------------- */
 
 async function init() {
+  // no celular, a tela simples é mais fácil (o editor completo continua em /?full=1)
+  if (matchMedia("(max-width: 760px)").matches && !new URLSearchParams(location.search).get("full")) {
+    location.replace("/celular.html" + location.search);
+    return;
+  }
   bindUI();
   [S.cfg, S.presets, S.music, S.brand] = await Promise.all([api("/api/config"), api("/api/presets"), api("/api/music"), api("/api/brand")]);
   applyBrand();
@@ -902,6 +907,19 @@ async function saveSettings() {
   toast("Configurações salvas.");
 }
 
+async function openPhone() {
+  try {
+    const { url, pin } = await api("/api/connect");
+    const qr = qrcode(0, "M");
+    qr.addData(url);
+    qr.make();
+    $("#qr").innerHTML = qr.createSvgTag({ cellSize: 6, margin: 0, scalable: true });
+    $("#phoneUrl").textContent = url;
+    $("#phonePin").textContent = pin;
+    $("#phoneDlg").showModal();
+  } catch (e) { toast(e.message); }
+}
+
 function openExport() {
   if (!ready()) return toast("Abra um projeto primeiro.");
   const t = TL();
@@ -941,7 +959,7 @@ async function startRender() {
 
 function bindUI() {
   const actions = {
-    new: () => $("#fileInput").click(), undo, export: openExport, settings: openSettings,
+    new: () => $("#fileInput").click(), undo, export: openExport, settings: openSettings, phone: openPhone,
     play: () => (S.playing ? pause() : play()), start: () => seek(0), end: () => seek(TL()?.duration || 0),
     back: () => seek(S.outTime - 1), fwd: () => seek(S.outTime + 1),
     split: splitAtPlayhead, delete: deleteSelected, zoomclip: toggleZoom,

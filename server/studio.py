@@ -8,7 +8,7 @@ import json
 import subprocess
 from pathlib import Path
 
-from . import ai, brand as brandkit, voices
+from . import ai, brand as brandkit, overlays, voices
 from .timeline import output_size
 
 VISUALS = ["texto", "lista", "numero", "citacao", "avatar", "logo"]
@@ -323,7 +323,7 @@ def render_motion(scenes: list, workdir: Path, fmt: str, brand: dict, music: Pat
         else:
             graph.append("[lgb]nullsink")
         n_in += 1
-    graph.append(f"[{cur}]ass=motion.ass[vout]")
+    graph.append(f"[{cur}]{overlays.ass_filter('motion.ass', workdir)}[vout]")
 
     # áudio: narração de cada cena no seu tempo + música opcional
     voiced = [s for s in scenes if s.get("audio")]

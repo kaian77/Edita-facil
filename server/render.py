@@ -139,7 +139,7 @@ def build_filter(timeline: dict, info: dict, width: int, height: int, fps: int,
     cur = "vc"
     if rich and (rich["glass"] or rich["images"]):
         cur = _rich_filters(parts, cur, rich)
-    parts.append(f"[{cur}]ass={ass_name}[vs]" if ass_name else f"[{cur}]null[vs]")
+    parts.append(f"[{cur}]{ass_name}[vs]" if ass_name else f"[{cur}]null[vs]")
     if logo_input is not None:
         lw = int(width * 0.16) // 2 * 2
         margin = int(width * 0.04)
@@ -229,7 +229,8 @@ def render(project_dir: Path, source: Path, timeline: dict, info: dict, music_pa
             next_input += 1
         rich["glass"] += glass
         rich["images"] += images
-    graph = build_filter(timeline, info, width, height, fps, ass_name, use_music, logo_input, rich)
+    ass_f = overlays.ass_filter(ass_name, project_dir) if ass_name else None
+    graph = build_filter(timeline, info, width, height, fps, ass_f, use_music, logo_input, rich)
     (project_dir / "render.filter").write_text(graph, encoding="utf-8")
 
     crf = {"alta": "18", "media": "21", "rapida": "25"}.get(quality, "20")

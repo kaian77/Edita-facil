@@ -26,6 +26,7 @@
       <div class="proj-sub" id="projSub">Envie um vídeo cru para começar</div>
     </div>
     <div class="tb-right">
+      <button data-action="phone" title="Usar no celular">📱 Celular</button>
       <button data-action="new">+ Novo vídeo</button>
       <button data-action="export" class="primary">Exportar</button>
       <span class="spec" id="spec">—</span>
@@ -302,6 +303,19 @@
   </form>
 </dialog>
 
+<!-- Celular -->
+<dialog id="phoneDlg">
+  <form method="dialog" class="dlg phone">
+    <h2>📱 Usar no celular</h2>
+    <p class="hint">Com o celular <b>no mesmo Wi-Fi</b> deste computador, aponte a câmera para o código:</p>
+    <div class="qr" id="qr"></div>
+    <p class="url" id="phoneUrl"></p>
+    <p>PIN: <b class="pin" id="phonePin"></b></p>
+    <p class="hint">No celular, toque em <b>Compartilhar → Adicionar à Tela de Início</b> para virar um app. O computador precisa estar ligado com o Edita Fácil aberto. Para usar fora de casa, veja “Usar pela internet” no LEIA-ME.</p>
+    <div class="dlg-actions"><button value="cancel">Fechar</button></div>
+  </form>
+</dialog>
+
 <!-- Exportar -->
 <dialog id="exportDlg">
   <form method="dialog" class="dlg">
@@ -325,6 +339,7 @@
 </dialog>
 
 <div class="toast" id="toast"></div>
+<script src="vendor/qrcode.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

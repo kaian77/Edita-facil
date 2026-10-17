@@ -159,7 +159,7 @@ def _motion(kind: str, x: int, y: int, W: int, dur_ms: int) -> str:
 
 def build_motion_ass(scenes: list, W: int, H: int, brand: dict, total: float) -> str:
     c = brand["colors"]
-    ACC, PRI, TXT = brandkit.ass_color(c["accent"]), brandkit.ass_color(c["primary"]), brandkit.ass_color(c["text"])
+    ACC, TXT = brandkit.ass_color(c["accent"]), brandkit.ass_color(c["text"])
     base = min(W, H)
     mh = int(W * 0.08)
     header = [

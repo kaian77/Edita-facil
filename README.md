@@ -28,18 +28,35 @@ Depois é só pedir ajustes no chat: _"corta a parte que eu falo do preço"_.
 - O gasto aparece no painel do Claude. Um Reels de 1 minuto custa em torno de **US$ 0,01 a 0,05** com o Opus 5.5;
   troque para Sonnet 5.5 ou Haiku 5.5 em ⚙ se quiser gastar ainda menos.
 
+## As telas
+
+- **Editor** — manda o vídeo cru, escolhe o modelo, a IA edita. Ajustes pelo chat ou na timeline.
+  Painel **Fundo**: troca o fundo (desfoque, cor, imagem ou cores da marca) sem mexer no rosto nem na voz.
+- **✦ Criar com IA** — sem gravar nada: escreva o tema e a IA faz roteiro, narração (com a sua voz clonada),
+  animações com giro 3D, números, listas e a sua marca. Ou mande um vídeo que você gostou e a IA copia o
+  **estilo** (estrutura, gancho, ritmo) para os seus temas.
+- **Minha marca** — nome, @, nicho, tom, cores, logo, avatar e voz. Fica salvo e a IA usa sempre.
+
+## Chaves (⚙ no editor)
+
+- **Anthropic** (obrigatória): console.anthropic.com → API Keys.
+- **ElevenLabs** (opcional, para narrar e clonar voz): elevenlabs.io → Developers → API Keys.
+  Clone só a sua voz ou de quem autorizou.
+
 ## Modelos prontos
 
 | Modelo | Para quê |
 |---|---|
 | 🔥 Reels Viral | Jump cuts, legenda com palavra destacada, zoom de ritmo, gancho |
 | ◻️ Comercial estilo Apple | Minimalista, textos grandes, ritmo calmo |
-| ✨ Profissional: Isso → Nisso | Antes/depois para dentista, nutri, dermato… |
+| ✨ Profissional: Isso → Nisso | O formato viral: caixinha de pergunta, quadros isso → nisso com antes/depois, card "use isso" com o produto, checklist e tela final com @ |
 | 🎙️ Corte de Podcast | Acha o melhor trecho de 30–60s |
 | 🎓 Aula / Tutorial | Mantém tudo, só limpa erros e silêncios |
 | 🧹 Só limpar | Remove silêncios e repetições, sem efeitos |
 
-Para criar o seu, copie um arquivo de `server/presets/` e mude as instruções.
+Para criar o seu, copie um arquivo de `server/presets/` e mude as instruções — ou use **Copiar um vídeo que gostei**.
+
+No formato isso → nisso, as imagens de antes e depois você escolhe no painel **Ajustes** ao clicar no elemento na timeline.
 
 ## Atalhos no editor
 
@@ -51,5 +68,6 @@ Para criar o seu, copie um arquivo de `server/presets/` e mude as instruções.
 server/   backend (FastAPI): análise, transcrição, IA, renderização ffmpeg
 web/      interface do editor (HTML/CSS/JS puro, sem build)
 projects/ seus projetos (vídeos, timeline) — fica só no seu PC
+data/     sua marca, estilos copiados e modelos baixados
 music/    suas músicas de fundo
 ```

@@ -13,7 +13,7 @@ from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from . import ai, background, brand as brandkit, media, reference, render, studio, timeline as tl, tour, transcribe, voices
+from . import ai, background, brand as brandkit, media, reference, render, studio, timeline as tl, transcribe, voices
 
 ROOT = Path(__file__).resolve().parent.parent
 PROJECTS = ROOT / "projects"
@@ -23,7 +23,6 @@ PRESETS = Path(__file__).resolve().parent / "presets"
 USER_PRESETS = reference.USER_PRESETS
 DATA = ROOT / "data"
 CONFIG = ROOT / "config.json"
-IMAGE_EXT = {".jpg", ".jpeg", ".png", ".webp", ".heic"}
 VIDEO_EXT = {".mp4", ".mov", ".m4v", ".mkv", ".webm", ".avi"}
 AUDIO_EXT = {".mp3", ".wav", ".m4a", ".aac", ".ogg"}
 
@@ -124,7 +123,7 @@ def analyze(pid: str, transcript: dict | None = None, plan_fn=None, proxy: bool 
         first = tl.build(plan, tr, info, preset)
         first["summary"] = ""
         notes = []
-        if tr["source"] not in ("whisper", "tts", "roteiro", "tour"):
+        if tr["source"] not in ("whisper", "tts", "roteiro"):
             notes.append(tr.get("warning") or "Transcrição indisponível: instale o faster-whisper para legendas e cortes inteligentes.")
         update_project(
             pid, status="pronto", status_text="Pronto", progress=1.0, timeline=first,
@@ -668,109 +667,7 @@ def reset_background(pid: str):
     return public(update_project(pid, source=orig, preview=preview, source_original=None))
 
 
-# ---------- tour virtual ----------
-
-def _tour_or_404(tid):
-    try:
-        return tour.load(tid)
-    except FileNotFoundError:
-        raise HTTPException(404, "Tour não encontrado.")
-
-
-@app.get("/api/tours")
-def tours_list():
-    return tour.list_tours()
-
-
-@app.post("/api/tours")
-def tours_create(body: dict):
-    return tour.create(str(body.get("name", "")))
-
-
-@app.get("/api/tours/{tid}")
-def tours_get(tid: str):
-    return _tour_or_404(tid)
-
-
-@app.put("/api/tours/{tid}")
-def tours_update(tid: str, body: dict):
-    _tour_or_404(tid)
-    return tour.update(tid, body)
-
-
-@app.delete("/api/tours/{tid}")
-def tours_delete(tid: str):
-    _tour_or_404(tid)
-    tour.delete(tid)
-    return {"ok": True}
-
-
-@app.post("/api/tours/{tid}/photos")
-async def tours_photos(tid: str, files: list[UploadFile] = File(...)):
-    _tour_or_404(tid)
-    t = None
-    for f in files[:40]:
-        if Path(f.filename or "").suffix.lower() not in IMAGE_EXT:
-            continue
-        try:
-            t = await run_in_threadpool(tour.add_photo, tid, f.filename or "foto.jpg", await f.read())
-        except Exception as exc:
-            raise HTTPException(400, f"Não consegui abrir {f.filename}: {exc}")
-    return t or tour.load(tid)
-
-
-@app.post("/api/tours/{tid}/describe")
-async def tours_describe(tid: str):
-    _tour_or_404(tid)
-    try:
-        t, usage = await run_in_threadpool(tour.describe, tid, load_config())
-    except ai.AIError as exc:
-        raise HTTPException(400, str(exc))
-    return {"tour": t, "usage": usage}
-
-
-def _run_tour_video(pid: str, tid: str, music: str):
-    d = PROJECTS / pid
-    try:
-        update_project(pid, status_text="Montando o vídeo do tour…", progress=0.1)
-        m = MUSIC / music if music and (MUSIC / music).exists() else None
-        tour.make_video(tid, d / "source.mp4", music=m)
-        rooms = tour.load(tid)["rooms"]
-        per = 4.0 - 0.5
-
-        def plan_fn(tr_, preset):
-            clips = [{"start": i * per, "end": (i + 1) * per + (0.5 if i == len(rooms) - 1 else 0),
-                      "zoom": 1.0, "label": r["name"]} for i, r in enumerate(rooms)]
-            return {"summary": "", "format": "9:16", "captions": False, "music": False, "clips": clips,
-                    "texts": [], "scenes": [{"title": r["name"], "desc": r.get("desc", "")} for r in rooms]}
-
-        tr = {"source": "tour", "segments": []}
-        analyze(pid, transcript=tr, plan_fn=plan_fn, proxy=False)
-    except Exception as exc:
-        update_project(pid, status="erro", status_text=f"Erro ao gerar o vídeo do tour: {exc}")
-
-
-@app.post("/api/tours/{tid}/video")
-def tours_video(tid: str, body: dict | None = None):
-    t = _tour_or_404(tid)
-    if not t["rooms"]:
-        raise HTTPException(400, "Envie as fotos primeiro.")
-    p = new_project(f"Tour — {t['name']}", "comercial-apple", origin="tour")
-    threading.Thread(target=_run_tour_video, args=(p["id"], tid, (body or {}).get("music", "")), daemon=True).start()
-    return public(p)
-
-
-@app.get("/api/tours/{tid}/zip")
-def tours_zip(tid: str):
-    t = _tour_or_404(tid)
-    data = tour.export_zip(tid, WEB)
-    name = "".join(c for c in t["name"] if c.isalnum() or c in " -_").strip() or "tour"
-    return Response(data, media_type="application/zip",
-                    headers={"Content-Disposition": f'attachment; filename="{name}.zip"'})
-
-
 app.mount("/media/projects", StaticFiles(directory=PROJECTS), name="projects")
 app.mount("/media/music", StaticFiles(directory=MUSIC), name="music")
 app.mount("/media/brand", StaticFiles(directory=brandkit.BRAND_DIR), name="brand")
-app.mount("/media/tours", StaticFiles(directory=tour.TOURS), name="tours")
 app.mount("/", StaticFiles(directory=WEB, html=True), name="web")

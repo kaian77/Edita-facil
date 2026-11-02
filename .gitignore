@@ -1,0 +1,5 @@
+kokoro/
+__pycache__/
+*.wav
+*.tmp.mp4
+prev_*.jpg

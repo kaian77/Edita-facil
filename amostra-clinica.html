@@ -88,6 +88,24 @@ section{scroll-margin-top:120px}
 .resumo-rot{margin-top:12px;font-size:14px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--suave)}
 .resumo-msg{margin-top:8px;background:#fff;border-radius:4px 16px 16px 16px;padding:12px 14px;font-size:17px}
 .resumo .btn{width:100%;margin-top:16px}
+/* Caixa 3D da mensagem */
+.caixa-wa{display:none;position:fixed;inset:0;z-index:200;background:rgba(8,37,26,.74);overflow-y:auto}
+.caixa-wa.aberta{display:block}
+.cw-cena{min-height:100%;display:flex;align-items:flex-end;justify-content:center;padding:20px 14px 26px;perspective:900px}
+.cw-caixa{width:100%;max-width:440px;background:var(--papel);border-radius:26px;padding:22px 20px 18px;border:2px solid var(--escuro);box-shadow:0 10px 0 var(--escuro),0 34px 50px rgba(0,0,0,.45);transform-origin:50% 100%;animation:subir3d .75s cubic-bezier(.2,.9,.25,1.08) both}
+@keyframes subir3d{from{opacity:0;transform:translateY(70%) rotateX(58deg) scale(.82)}55%{opacity:1}to{opacity:1;transform:none}}
+.cw-topo{display:flex;align-items:center;gap:14px}
+.cw-ic{width:58px;height:58px;border-radius:18px;background:var(--limao);color:var(--escuro);display:grid;place-items:center;flex:none}
+.cw-ic svg{width:36px;height:36px}
+.cw-topo b{display:block;font-family:var(--titulo);font-weight:800;font-size:25px;line-height:1.1;letter-spacing:-.02em}
+.cw-topo small{display:block;font-size:15px;color:var(--suave);margin-top:2px}
+.cw-msg{margin:16px 0 4px;background:#E4EDD2;border-radius:4px 18px 18px 18px;padding:14px 16px;font-size:19px;line-height:1.4;min-height:5.2em}
+.cw-cursor{display:inline-block;width:2px;height:1.1em;background:var(--escuro);margin-left:2px;vertical-align:-3px;animation:piscar .8s steps(1) infinite}
+@keyframes piscar{50%{opacity:0}}
+.cw-caixa .btn{width:100%;margin-top:10px}
+.cw-voltar{display:block;width:100%;min-height:48px;margin-top:6px;background:none;border:0;font-weight:600;font-size:17px;color:var(--suave);text-decoration:underline;text-underline-offset:4px}
+.cw-nota{font-size:14.500px;line-height:1.35;color:var(--suave);text-align:center}
+@media (min-width:700px){.cw-cena{align-items:center}}
 .p-autor a{display:inline-flex;align-items:center;gap:8px;min-height:48px;padding:0 4px;font-weight:700;color:var(--escuro)}
 .p-autor a svg{width:22px;height:22px}
 .p-autor b{color:var(--tinta)}
@@ -656,12 +674,25 @@ section{scroll-margin-top:120px}
   </div>
 </div>
 
+<div class="caixa-wa" id="caixaWa" role="dialog" aria-modal="true" aria-labelledby="cwTit">
+  <div class="cw-cena">
+    <div class="cw-caixa" id="cwCaixa">
+      <div class="cw-topo"><span class="cw-ic" id="cwIc"></span><div><b id="cwTit">Mensagem pronta</b><small id="cwPara"></small></div></div>
+      <p class="cw-msg" aria-live="polite"><span id="cwTexto"></span><i class="cw-cursor" aria-hidden="true"></i></p>
+      <a class="btn btn-escuro" id="cwEnviar" target="_blank" rel="noopener"></a>
+      <button type="button" class="btn btn-contorno" id="cwCopiar">Copiar mensagem</button>
+      <button type="button" class="cw-voltar" id="cwFechar">Voltar</button>
+      <p class="cw-nota">Se o WhatsApp não abrir nesta tela, copie a mensagem e envie para o número acima.</p>
+    </div>
+  </div>
+</div>
+
 <script>
 /* ===================================================================
    TROQUE AQUI os dados da clínica e os seus
    =================================================================== */
 var CLINICA_NOME    = "Sua Clínica · Saúde Integrada";
-var WHATSAPP_NUMERO = "5561900000000";      // só números: país + DDD + número
+var WHATSAPP_NUMERO = "5561992372216";      // só números: país + DDD + número (na amostra é o do Kaian, para testar; trocar pelo da clínica)
 var AUTOR_NOME      = "Kaian Bruno";
 var AUTOR_WHATSAPP  = "5561992372216";      // recebe o "Quero seguir com estas etapas"
 /* =================================================================== */
@@ -736,7 +767,7 @@ var AUTOR_WHATSAPP  = "5561992372216";      // recebe o "Quero seguir com estas 
       '<ul class="etiquetas">' + e.tags.map(function(t){ return '<li>' + t + '</li>'; }).join('') + '</ul>' +
       '<button type="button" class="card-abrir" aria-expanded="false" aria-controls="passos' + i + '">Como funciona<i aria-hidden="true"></i></button>' +
       '<ol class="passos" id="passos' + i + '">' + e.passos.map(function(p){ return '<li>' + p + '</li>'; }).join('') + '</ol>' +
-      '<a class="btn btn-escuro" target="_blank" rel="noopener" data-wa="Olá! Vim pelo site e quero agendar ' + nomeMin + '.">' + ICONE_WA + 'Agendar ' + nomeMin + '</a>';
+      '<a class="btn btn-escuro" target="_blank" rel="noopener" data-esp="' + i + '" data-wa="Olá! Vim pelo site e quero agendar ' + nomeMin + '.">' + ICONE_WA + 'Agendar ' + nomeMin + '</a>';
     art.addEventListener("click", function(ev){
       if (ev.target.closest("a")) return;
       var aberto = art.classList.toggle("aberto");
@@ -839,7 +870,62 @@ var AUTOR_WHATSAPP  = "5561992372216";      // recebe o "Quero seguir com estas 
   btnAbrir.addEventListener("click", abrirProposta);
   btnFechar.addEventListener("click", fecharProposta);
   document.addEventListener("keydown", function(ev){
-    if (ev.key === "Escape" || ev.key === "Esc" || ev.keyCode === 27) fecharProposta();
+    if (ev.key === "Escape" || ev.key === "Esc" || ev.keyCode === 27){
+      if (caixaWa.classList.contains("aberta")) fecharCaixa(); else fecharProposta();
+    }
+  });
+
+  /* ---------- Caixa 3D: mostra a mensagem sendo escrita antes de enviar ---------- */
+  var caixaWa = $("#caixaWa"), cwTimer = null, cwOrigem = null, cwMsg = "";
+  function abrirCaixa(msg, numero, simbolo, origem){
+    clearInterval(cwTimer);
+    cwMsg = msg; cwOrigem = origem;
+    $("#cwIc").innerHTML = simbolo || ICONE_WA;
+    $("#cwPara").textContent = "Vai para o WhatsApp " + telefone(numero || WHATSAPP_NUMERO);
+    $("#cwEnviar").href = linkWhats(msg, numero);
+    $("#cwEnviar").innerHTML = ICONE_WA + "Enviar no WhatsApp";
+    $("#cwCopiar").textContent = "Copiar mensagem";
+    var alvo = $("#cwTexto"), i = 0;
+    caixaWa.classList.remove("aberta"); void caixaWa.offsetWidth;   // reinicia a animação
+    caixaWa.classList.add("aberta");
+    document.documentElement.classList.add("travado");
+    if (reduzido()){ alvo.textContent = msg; }
+    else {
+      alvo.textContent = "";
+      cwTimer = setInterval(function(){
+        i++; alvo.textContent = msg.slice(0, i);
+        if (i >= msg.length) clearInterval(cwTimer);
+      }, 24);
+    }
+    $("#cwEnviar").focus();
+  }
+  function fecharCaixa(){
+    clearInterval(cwTimer);
+    caixaWa.classList.remove("aberta");
+    if (!proposta.classList.contains("aberta")) document.documentElement.classList.remove("travado");
+    if (cwOrigem) cwOrigem.focus();
+  }
+  $("#cwFechar").addEventListener("click", fecharCaixa);
+  caixaWa.addEventListener("click", function(ev){ if (!ev.target.closest(".cw-caixa")) fecharCaixa(); });
+  $("#cwCopiar").addEventListener("click", function(){
+    var b = this, ok = function(){ b.textContent = "Mensagem copiada"; };
+    function reserva(){
+      var t = document.createElement("textarea");
+      t.value = cwMsg; t.style.position = "fixed"; t.style.opacity = "0";
+      $("#cwCaixa").appendChild(t); t.select();
+      try { document.execCommand("copy"); ok(); } catch (e) { b.textContent = "Selecione o texto e copie"; }
+      t.remove();
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(cwMsg).then(ok, reserva);
+    else reserva();
+  });
+  /* todo botão de WhatsApp passa pela caixa (o link de verdade fica no botão "Enviar") */
+  document.addEventListener("click", function(ev){
+    var a = ev.target.closest("a[data-wa]");
+    if (!a) return;
+    ev.preventDefault();
+    var esp = a.getAttribute("data-esp");
+    abrirCaixa(a.getAttribute("data-wa"), a.getAttribute("data-num"), esp !== null ? icone(ESPECIALIDADES[esp]) : "", a);
   });
 
   /* ---------- Proposta: etapas e totais ---------- */
@@ -885,6 +971,7 @@ var AUTOR_WHATSAPP  = "5561992372216";      // recebe o "Quero seguir com estas 
     $("#resumoMsg").textContent = msg;
     [btnSeguir, $("#btnSeguir2")].forEach(function(b){
       b.href = linkWhats(msg, AUTOR_WHATSAPP);
+      b.setAttribute("data-wa", msg); b.setAttribute("data-num", AUTOR_WHATSAPP);
       b.innerHTML = ICONE_WA + rotulo;
     });
   }

@@ -66,6 +66,21 @@ section{scroll-margin-top:120px}
 .abertura-arte{justify-self:center;width:min(78vw,340px);margin-top:26px}
 .abertura-arte svg{width:100%;height:auto}
 
+.ic{fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.atalhos{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:30px}
+.atalho{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:88px;padding:10px 4px;border-radius:18px;border:1.5px solid rgba(245,242,234,.3);background:rgba(255,255,255,.06);color:#F5F2EA;font-weight:600;font-size:15px;line-height:1.15;transition:background-color .15s}
+.atalho:hover{background:rgba(255,255,255,.14)}
+.atalho .ic{width:36px;height:36px;color:var(--limao)}
+.card{scroll-margin-top:130px}
+.card .btn svg{width:24px;height:24px}
+.faixa-grupo .ic{width:30px;height:30px;margin-right:-12px}
+#demoEsp .op{display:flex;align-items:center;gap:8px;padding:6px 10px;text-align:left;font-size:15px}
+#demoEsp .op .ic{width:26px;height:26px;color:var(--verde)}
+#demoEsp .op.sel .ic{color:var(--limao)}
+.p-autor a{display:inline-flex;align-items:center;gap:8px;min-height:48px;padding:0 4px;font-weight:700;color:var(--escuro)}
+.p-autor a svg{width:22px;height:22px}
+.p-autor b{color:var(--tinta)}
+
 /* Faixa correndo */
 .faixa{background:var(--limao);color:var(--escuro);overflow:hidden;border-block:2px solid var(--escuro)}
 .faixa-trilho{display:flex;width:max-content;animation:correr 34s linear infinite}
@@ -298,6 +313,9 @@ section{scroll-margin-top:120px}
   .abertura h1{font-size:clamp(96px,10.4vw,150px)}
   .abertura-arte{width:100%;max-width:400px;margin:0;grid-row:1/4;grid-column:2}
   .abertura-grade > *:not(.abertura-arte){grid-column:1}
+  .abertura-grade > .atalhos{grid-column:1/-1;grid-template-columns:repeat(6,1fr);gap:12px;margin-top:20px}
+  .atalho{flex-direction:row;gap:10px;min-height:64px;font-size:16px}
+  .card{scroll-margin-top:96px}
   .secao{padding:96px 0}
   .secao-cab{margin-bottom:44px}
   .cards{grid-template-columns:repeat(3,1fr)}
@@ -360,6 +378,7 @@ section{scroll-margin-top:120px}
           Falar no WhatsApp
         </a>
       </div>
+      <div class="atalhos" id="atalhos" aria-label="Ir direto para uma especialidade"></div>
     </div>
   </section>
 
@@ -604,7 +623,7 @@ section{scroll-margin-top:120px}
       </div>
     </div>
 
-    <p class="p-autor" id="pAutor">Feito por [Seu nome] · [WhatsApp]</p>
+    <p class="p-autor" id="pAutor">Feito por Kaian Bruno</p>
   </div>
 
   <div class="barra">
@@ -623,8 +642,8 @@ section{scroll-margin-top:120px}
    =================================================================== */
 var CLINICA_NOME    = "Sua Clínica · Saúde Integrada";
 var WHATSAPP_NUMERO = "5561900000000";      // só números: país + DDD + número
-var AUTOR_NOME      = "[Seu nome]";
-var AUTOR_WHATSAPP  = "[WhatsApp]";
+var AUTOR_NOME      = "Kaian Bruno";
+var AUTOR_WHATSAPP  = "5561992372216";      // recebe o "Quero seguir com estas etapas"
 /* =================================================================== */
 
 (function(){
@@ -634,9 +653,15 @@ var AUTOR_WHATSAPP  = "[WhatsApp]";
   var $$ = function(s, r){ return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
   var SVGNS = "http://www.w3.org/2000/svg";
 
-  function linkWhats(msg){
-    return "https://wa.me/" + WHATSAPP_NUMERO + "?text=" + encodeURIComponent(msg);
+  function linkWhats(msg, numero){
+    return "https://wa.me/" + (numero || WHATSAPP_NUMERO) + "?text=" + encodeURIComponent(msg);
   }
+  function telefone(n){
+    var m = String(n).replace(/\D/g, "").match(/^55(\d{2})(\d{5})(\d{4})$/);
+    return m ? "(" + m[1] + ") " + m[2] + "-" + m[3] : n;
+  }
+  function icone(e){ return '<svg class="ic" viewBox="0 0 48 48" aria-hidden="true">' + e.icone + '</svg>'; }
+  var ICONE_WA = '<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 27l1.700-6A11.500 11.500 0 1 1 11 25.400z"/><path d="M12 12.500c0 4 3.500 7.500 7.500 7.500"/></svg>';
   function reais(n){ return "R$ " + n.toLocaleString("pt-BR"); }
 
   /* ---------- Nome da clínica ---------- */
@@ -645,7 +670,9 @@ var AUTOR_WHATSAPP  = "[WhatsApp]";
   $$("[data-nome]").forEach(function(el){ el.textContent = CLINICA_NOME; });
   $("[data-nome-curto]").textContent = partes[0].trim();
   $("[data-nome-sub]").textContent = (partes[1] || "").trim();
-  $("#pAutor").textContent = "Feito por " + AUTOR_NOME + " · " + AUTOR_WHATSAPP;
+  $("#pAutor").innerHTML = 'Feito por <b>' + AUTOR_NOME + '</b> · <a target="_blank" rel="noopener" href="' +
+    linkWhats("Olá, " + AUTOR_NOME.split(" ")[0] + "! Vi a proposta e quero tirar uma dúvida.", AUTOR_WHATSAPP) + '">' +
+    ICONE_WA + 'WhatsApp ' + telefone(AUTOR_WHATSAPP) + '</a>';
 
   /* ---------- Especialidades ---------- */
   var ESPECIALIDADES = [
@@ -665,11 +692,11 @@ var AUTOR_WHATSAPP  = "[WhatsApp]";
       passos:["Avaliação da postura","Sessões manuais","Orientações para casa"],
       tags:["Convênio","Particular"],
       icone:'<rect x="19" y="4" width="10" height="6" rx="3"/><rect x="21" y="13" width="10" height="6" rx="3"/><rect x="21" y="22" width="10" height="6" rx="3"/><rect x="19" y="31" width="10" height="6" rx="3"/><path d="M39 12c4 7 4 17 0 24"/><path d="M11 12c-4 7-4 17 0 24"/><path d="M24 41v3"/>' },
-    { nome:"Acupuntura para gestantes", para:"Apoio ao bem-estar durante a gestação.",
+    { nome:"Acupuntura para gestantes", curto:"Acupuntura", para:"Apoio ao bem-estar durante a gestação.",
       passos:["Conversa sobre a gestação","Sessões com agulhas finas","Acompanhamento por trimestre"],
       tags:["Convênio","Particular"],
       icone:'<circle cx="17" cy="9" r="4"/><path d="M15 17c-3 6-3 13-1 26"/><path d="M19 17c9 2 14 8 13 15-1 6-7 8-13 7"/><path d="M36 6l-5 12M43 12l-8 9"/><circle cx="37" cy="4.500" r="1.400"/><circle cx="44" cy="10.800" r="1.400"/>' },
-    { nome:"Terapia ayurvédica", para:"Terapia tradicional indiana voltada ao equilíbrio e ao bem-estar.",
+    { nome:"Terapia ayurvédica", curto:"Ayurvédica", para:"Terapia tradicional indiana voltada ao equilíbrio e ao bem-estar.",
       passos:["Avaliação do perfil","Plano de cuidados","Sessões de terapia"],
       tags:["Particular"],
       icone:'<path d="M24 37c-7-5-9-13 0-25 9 12 7 20 0 25z"/><path d="M24 37c-10 0-17-5-18-14 6 0 10 2 13 6"/><path d="M24 37c10 0 17-5 18-14-6 0-10 2-13 6"/><path d="M13 43h22"/>' }
@@ -679,22 +706,35 @@ var AUTOR_WHATSAPP  = "[WhatsApp]";
   ESPECIALIDADES.forEach(function(e, i){
     var art = document.createElement("article");
     art.className = "card revela" + (e.destaque ? " destaque" : "");
+    art.id = "card" + i;
     var nomeMin = e.nome.charAt(0).toLowerCase() + e.nome.slice(1);
     art.innerHTML =
-      '<div class="card-topo"><span class="icone"><svg viewBox="0 0 48 48" aria-hidden="true">' + e.icone + '</svg></span>' +
+      '<div class="card-topo"><span class="icone">' + icone(e) + '</span>' +
       '</div>' +
       '<h3>' + e.nome + '</h3>' +
       '<p class="card-para">' + e.para + '</p>' +
       '<ul class="etiquetas">' + e.tags.map(function(t){ return '<li>' + t + '</li>'; }).join('') + '</ul>' +
       '<button type="button" class="card-abrir" aria-expanded="false" aria-controls="passos' + i + '">Como funciona<i aria-hidden="true"></i></button>' +
       '<ol class="passos" id="passos' + i + '">' + e.passos.map(function(p){ return '<li>' + p + '</li>'; }).join('') + '</ol>' +
-      '<a class="btn btn-escuro" target="_blank" rel="noopener" data-wa="Olá! Vim pelo site e quero agendar ' + nomeMin + '.">Agendar ' + nomeMin + '</a>';
+      '<a class="btn btn-escuro" target="_blank" rel="noopener" data-wa="Olá! Vim pelo site e quero agendar ' + nomeMin + '.">' + ICONE_WA + 'Agendar ' + nomeMin + '</a>';
     art.addEventListener("click", function(ev){
       if (ev.target.closest("a")) return;
       var aberto = art.classList.toggle("aberto");
       $(".card-abrir", art).setAttribute("aria-expanded", aberto ? "true" : "false");
     });
     cards.appendChild(art);
+
+    /* atalho com o símbolo, na abertura */
+    var at = document.createElement("button");
+    at.type = "button"; at.className = "atalho";
+    at.innerHTML = icone(e) + "<span>" + (e.curto || e.nome) + "</span>";
+    at.setAttribute("aria-label", "Ver " + e.nome);
+    at.addEventListener("click", function(){
+      art.classList.add("aberto", "visto");
+      $(".card-abrir", art).setAttribute("aria-expanded", "true");
+      art.scrollIntoView({ behavior: reduzido() ? "auto" : "smooth", block: "start" });
+    });
+    $("#atalhos").appendChild(at);
   });
 
   /* ---------- Faixa correndo ---------- */
@@ -703,7 +743,7 @@ var AUTOR_WHATSAPP  = "[WhatsApp]";
     var grupo = document.createElement("div");
     grupo.className = "faixa-grupo";
     if (g) grupo.setAttribute("aria-hidden", "true");
-    grupo.innerHTML = ESPECIALIDADES.concat(ESPECIALIDADES).map(function(e){ return "<span>" + e.nome + "</span>"; }).join("");
+    grupo.innerHTML = ESPECIALIDADES.concat(ESPECIALIDADES).map(function(e){ return "<span>" + icone(e) + e.nome + "</span>"; }).join("");
     trilho.appendChild(grupo);
   }
 
@@ -816,7 +856,7 @@ var AUTOR_WHATSAPP  = "[WhatsApp]";
     } else {
       $("#totNota").textContent = notas.join(" ") || "Pagamento único, sem mensalidade.";
       btnSeguir.setAttribute("aria-disabled", "false");
-      btnSeguir.href = linkWhats("Olá! Quero seguir com: " + nomes.join(", ") + ". Valor único " + reais(unico) + " e " + reais(mes) + " por mês.");
+      btnSeguir.href = linkWhats("Olá! Quero seguir com: " + nomes.join(", ") + ". Valor único " + reais(unico) + " e " + reais(mes) + " por mês.", AUTOR_WHATSAPP);
     }
   }
   $$("[data-incluir]").forEach(function(b){
@@ -860,7 +900,7 @@ var AUTOR_WHATSAPP  = "[WhatsApp]";
   function desenharDemo(){
     elEsp.innerHTML = ""; elDias.innerHTML = ""; elHoras.innerHTML = "";
     ESPECIALIDADES.forEach(function(e, i){
-      elEsp.appendChild(botao(e.nome, "", demo.esp === i, function(){ demo.esp = i; demo.hora = null; desenharDemo(); }));
+      elEsp.appendChild(botao(icone(e) + "<span>" + e.nome + "</span>", "", demo.esp === i, function(){ demo.esp = i; demo.hora = null; desenharDemo(); }));
     });
     dias.forEach(function(dt, i){
       elDias.appendChild(botao(SEM_CURTO[dt.getDay()], dm(dt), demo.dia === i, function(){ demo.dia = i; demo.hora = null; desenharDemo(); }));

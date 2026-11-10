@@ -1,0 +1,37 @@
+feature,area,priority,original,clone,notes
+Estante visual com prateleiras e fundo,estante,must,yes,no,camadas 2.5D
+Livro exibido como lombada,estante,must,yes,no,
+Livro exibido com a capa de frente,estante,must,yes,no,
+Arrastar e soltar livros entre prateleiras,estante,must,yes,no,
+Varias estantes com nome proprio,estante,must,yes,no,ex.: TBR
+Adicionar livro por busca de titulo,adicionar,must,yes,no,Open Library ou Google Books
+Adicionar livro por codigo de barras,adicionar,must,yes,no,
+Capa buscada automaticamente,adicionar,must,yes,no,
+Lombada gerada a partir da capa quando nao ha foto,adicionar,must,palpite,no,cor dominante + titulo
+Estados do livro: quero ler / lendo / lido / abandonei,livros,must,yes,no,
+Trocar fundo e estilo da prateleira,personalizacao,must,yes,no,
+Enfeites na prateleira (plantas velas etc.),personalizacao,must,yes,no,arte original
+Onboarding com nome e montagem da primeira estante,onboarding,must,yes,no,textos proprios
+Paywall com teste gratis e planos,pagamento,must,yes,no,anual / semanal / vitalicio no original
+Adicionar livro por foto da lombada,adicionar,should,yes,no,recorte + identificacao
+Livros deitados em pilha,estante,should,yes,no,
+Arrumacao automatica (Arrange),estante,should,yes,no,
+Cordao de luzes por prateleira,personalizacao,should,yes,no,
+Temas prontos (conjunto de fundo + prateleira + enfeites),personalizacao,should,yes,no,
+Moldura com foto do usuario,personalizacao,should,yes,no,
+Lembrete diario de leitura,notificacoes,should,yes,no,
+Projecao de leitura no onboarding,onboarding,should,yes,no,livros em dez anos
+Widget de tela inicial com a estante,widget,should,yes,no,nativo em cada plataforma
+Estatisticas de leitura,stats,should,yes,no,tela nao vista
+Restaurar compra e codigo promocional,pagamento,should,yes,no,
+Animacao ao abandonar um livro,livros,could,yes,no,fogo e cinzas no original; criar uma propria
+Retrospectiva (Wrap Up),stats,could,yes,no,
+Compartilhar imagem da estante,compartilhar,could,palpite,no,
+Sessao de foco com cronometro,foco,could,yes,no,
+Meta de leitura anual,stats,could,yes,no,
+Placa com o nome do usuario na estante,personalizacao,could,yes,no,
+Comunidade: seguir leitores e avaliar,comunidade,could,yes,skip,exige conta e servidor; a rede deles nao vem junto
+Apple Watch,widget,could,yes,skip,fora da primeira versao
+Bloqueio de apps na sessao de foco,foco,could,yes,skip,precisa de permissao especial da Apple
+Arte e temas do original,personalizacao,must,yes,skip,pertence a eles; fazer arte nova
+Nome marca e textos do original,marca,must,yes,skip,pertence a eles; criar os proprios
